@@ -27,11 +27,11 @@ THE SOFTWARE.
  *    Purpose:   Provide Erlang with access to the serial port.
  */
 
-/* This program communicates through the following protocoll when
- * run with -erlang:
+/* This program communicates through the following protocol when run with
+ * -erlang:
  *
- *   (all messages starts with a two byte header containing the
- *   size of the message)
+ *   (all messages start with a two-byte header containing the size of the
+ *   message)
  *
  *   SEND DATA
  *        Transmits DATA on the currently open tty
@@ -224,10 +224,10 @@ void set_tty_speed(int fd, speed_t new_ispeed, speed_t new_ospeed)
 	  exit(1);
 	}
 
-  ttymodes.c_cflag |= CRTSCTS;     /* enable RTS/CTS flow control */
+  //ttymodes.c_cflag |= CRTSCTS;     /* enable RTS/CTS flow control */
+  ttymodes.c_cflag &= ~CRTSCTS;     /* disable RTS/CTS flow control */
 
-  /* Apply hanges */
-
+  // Apply changes:
   if (tcsetattr(fd, TCSAFLUSH, &ttymodes) < 0)
 	{
 	  perror("tcsetattr");
@@ -307,6 +307,7 @@ int read_at_least(int fd, unsigned char buf[], int nr)
   return nr_read;
 }
 
+
 /**********************************************************************
  * Name: tbh_read
  * Desc: Reads one message with two-byte-header, filling buffer.
@@ -314,7 +315,6 @@ int read_at_least(int fd, unsigned char buf[], int nr)
  *       if the input file has been closed.
  *
  */
-
 int tbh_read(int fd, unsigned char buf[], int buffsize)
 {
   int remaining, msgsize;
@@ -335,15 +335,13 @@ int tbh_read(int fd, unsigned char buf[], int buffsize)
 	return msgsize + TBHSIZE;
 }
 
-/**********************************************************************
- * Name: write_to_tty
- * Desc: write a number of bytes found in the buffer to the tty,
- *       filling the buffer from the given fillfd if neccessary.
+
+/* @doc Writes a number of bytes found in the buffer to the tty, filling the
+ * buffer from the given fillfd if neccessary.
  *
  */
-
 void write_to_tty(int ttyfd, int fillfd, int totalsize, int buffsize,
-		  unsigned char buf[], int buffmaxsize)
+				  unsigned char buf[], int buffmaxsize)
 {
   write(ttyfd,buf,buffsize);
   totalsize -= buffsize;
@@ -378,9 +376,7 @@ int main(int argc, char *argv[])
 
   strcpy(ttyname,"/dev/ttyS0");
 
-  /****************************************
-   * Process command line arguments
-   */
+  // Process command-line arguments:
 
   {
 	int i;
@@ -426,41 +422,36 @@ int main(int argc, char *argv[])
 	  }
   }
 
-  /****************************************
-   * Configure serial port (tty)
-   */
+  // Configure serial port (tty):
 
   if (!erlang)
 	{
 	  ttyfd = open(ttyname,O_RDWR);
 	  if (!TtyOpen(ttyfd))
-	{
-	  fprintf(stderr,"Cannot open terminal %s for read and write\n",
-		  ttyname);
-	  exit(1);
-	}
+	  {
+		fprintf(stderr,"Cannot open terminal %s for read and write\n",
+				ttyname);
+		exit(1);
+	  }
 
 	  set_raw_tty_mode(ttyfd);
 	  set_tty_speed(ttyfd,in_speed,out_speed);
+
 	}
 
-  /****************************************
-   * Configure user port
-   */
+  // Configure user port:
 
   stdinfd = fileno(stdin);
   stdoutfd = fileno(stdout);
 
   if (cbreak)
 	{
-	  /* Use non-cononical mode for input */
+	  /* Use non-canonical mode for input */
 	  set_raw_tty_mode(stdinfd);
 	  fprintf(stderr,"Entering non-canonical mode, exit with ---\n");
 	}
 
-  /****************************************
-   * Start processing loop
-   */
+  // Start processing loop:
 
   {
 	fd_set readfds;           /* file descriptor bit field for select */
@@ -645,7 +636,7 @@ int main(int argc, char *argv[])
 
 			  in_speed = get_speed(atoi(&buf[HEADERSIZE]));
 
-			  /* Null-terminate string */
+			  /* Null-terminated string */
 			  buf[nr_read] = '\0';
 
 			  /* Find start of second speed */
@@ -697,9 +688,7 @@ int main(int argc, char *argv[])
 	  }
   }
 
-  /****************************************
-   * Usage errors
-   */
+  // Usage errors:
 
  error_usage:
   fprintf(stderr,"usage: %s [-cbreak] [-erlang] [-speed <bit rate>] [-tty <dev>]\n",argv[0]);
