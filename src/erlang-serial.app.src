@@ -1,7 +1,7 @@
 %% ex: ft=erlang
 {application, 'erlang-serial',
 	[{description,"Erlang driver for serial communication"},
-	 {vsn,"1.0"},
+	 {vsn,"1.1"},
 	 {registered,[]},
 	 {applications,[kernel,stdlib]},
 	 {modules,[serial]}]}.

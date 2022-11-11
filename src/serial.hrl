@@ -28,14 +28,14 @@
 -ifndef(SERIAL_HRL).
 -define(SERIAL_HRL, true).
 
--define(SEND,0).
--define(CONNECT,1).
--define(DISCONNECT,2).
--define(OPEN,3).
--define(CLOSE,4).
--define(SPEED,5).
--define(PARITY_ODD,6).
--define(PARITY_EVEN,7).
--define(BREAK,8).
+-define(SEND, 0).
+-define(CONNECT, 1).
+-define(DISCONNECT, 2).
+-define(OPEN, 3).
+-define(CLOSE, 4).
+-define(SPEED, 5).
+-define(PARITY_ODD, 6).
+-define(PARITY_EVEN, 7).
+-define(BREAK, 8).
 
 -endif.
