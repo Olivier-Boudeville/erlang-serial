@@ -126,8 +126,3 @@ slip_unpack_esc_acc([X|Xs],Acc) ->
 	?ESCESC ->
 	    slip_unpack_acc(Xs,[?ESC|Acc])
     end.
-
-
-
-
-

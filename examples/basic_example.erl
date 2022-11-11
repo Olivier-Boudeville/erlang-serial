@@ -9,7 +9,7 @@ open() ->
 close(SerialPort) ->
   SerialPort ! {close},
   ok.
-  
+
 send(SerialPort) ->
   SerialPort ! {send, "Hello World\r\n"},
   ok.

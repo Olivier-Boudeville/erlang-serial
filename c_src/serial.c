@@ -20,12 +20,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/*    -*- C -*- 
+/*    -*- C -*-
  *    File:	 serial.c  (~jb/serialport/serial.c)
  *    Author:	 Johan Bevemyr
  *    Created:	 Fri Oct 18 09:59:34 1996
  *    Purpose:   Provide Erlang with access to the serial port.
- */ 
+ */
 
 /* This program communicates through the following protocoll when
  * run with -erlang:
@@ -35,16 +35,16 @@ THE SOFTWARE.
  *
  *   SEND DATA
  *        Transmits DATA on the currently open tty
- * 
- *   CONNECT     
+ *
+ *   CONNECT
  *        Reopens a disconnected connection.
  *
  *   DISCONNECT
  *        Hangs up an open serial line
- * 
- *   OPEN path 
+ *
+ *   OPEN path
  *        Opens a new tty, closing the old (but not disconnecting). It
- *        is possible to alternate between two connections. 
+ *        is possible to alternate between two connections.
  *
  *   SPEED inspeed outspeed
  *        Sets the input and output speeds. New connections will
@@ -56,9 +56,9 @@ THE SOFTWARE.
  *
  *   BREAK
  *        Sends break.
- *   
+ *
  *   usage: serial [-debug] [-cbreak] [-erlang] [-speed <bit rate>] [-tty <dev>]
- *          bit rate is one of 
+ *          bit rate is one of
  *                  50      75      110
  *                  134     150     200
  *                  300     600     1200
@@ -101,10 +101,10 @@ bit_rate bitrate_table[MAXSPEED] = {
   {2400   , B2400  },
   {4800   , B4800  },
   {9600   , B9600  },
-  {19200  , B19200 },	
-  {38400  , B38400 },	
-  {57600  , B57600 },	
-  {115200 , B115200 }, 	
+  {19200  , B19200 },
+  {38400  , B38400 },
+  {57600  , B57600 },
+  {115200 , B115200 },
   {230400 , B230400 }
 };
 
@@ -112,26 +112,26 @@ bit_rate bitrate_table[MAXSPEED] = {
  * Name: get_speed
  *
  * Desc: Returns the speed_t value associated with a given bit_rate
- *       according to the bitrate_table. B0 is returned if no matching entry 
+ *       according to the bitrate_table. B0 is returned if no matching entry
  *       is found.
  */
 
 speed_t get_speed(int speed)
 {
   int i;
-  
+
   for(i=0 ; i < MAXSPEED ; i++)
-    {
-      if (speed == bitrate_table[i].rate)
+	{
+	  if (speed == bitrate_table[i].rate)
 	break;
-    }
-  
+	}
+
   if (i == MAXSPEED)
-    return B0;
+	return B0;
   else
-    return bitrate_table[i].speed;
+	return bitrate_table[i].speed;
 }
-  
+
 /**********************************************************************
  * Name: set_raw_tty_mode
  *
@@ -144,11 +144,11 @@ void set_raw_tty_mode(int fd)
 
   /* Get ttymodes */
 
-  if (tcgetattr(fd,&ttymodes) < 0) 
-    {
-      perror("tcgetattr");
-      exit(1);
-    }
+  if (tcgetattr(fd,&ttymodes) < 0)
+	{
+	  perror("tcgetattr");
+	  exit(1);
+	}
 
   /* Configure for raw mode (see man termios) */
   ttymodes.c_cc[VMIN] = 1;         /* at least one character */
@@ -171,9 +171,9 @@ void set_raw_tty_mode(int fd)
 			ECHOK |    /* disable echo newline after kill */
 			ECHOKE |   /* disable visual kill with bs-sp-bs */
 			ECHONL |   /* disable echo nl when echo off */
-			ISIG | 	   /* disable tty-generated signals */
+			ISIG |	   /* disable tty-generated signals */
 			IEXTEN);   /* disable extended input processing */
-  
+
   ttymodes.c_cflag |= CS8;         /* enable eight bit chars */
   ttymodes.c_cflag &= ~PARENB;     /* disable input parity check */
   ttymodes.c_cflag |= CREAD;       /* enable receiver */
@@ -188,10 +188,10 @@ void set_raw_tty_mode(int fd)
   /* Apply changes */
 
   if (tcsetattr(fd, TCSAFLUSH, &ttymodes) < 0)
-    {
-      perror("tcsetattr");
-      exit(1);
-    }
+	{
+	  perror("tcsetattr");
+	  exit(1);
+	}
 }
 
 /**********************************************************************
@@ -206,33 +206,33 @@ void set_tty_speed(int fd, speed_t new_ispeed, speed_t new_ospeed)
 
   /* Get ttymodes */
 
-  if (tcgetattr(fd,&ttymodes) < 0) 
-    {
-      perror("tcgetattr");
-      exit(1);
-    }
+  if (tcgetattr(fd,&ttymodes) < 0)
+	{
+	  perror("tcgetattr");
+	  exit(1);
+	}
 
   if (cfsetispeed(&ttymodes,new_ispeed) < 0)
-    {
-      perror("cfsetispeed");
-      exit(1);
-    }
+	{
+	  perror("cfsetispeed");
+	  exit(1);
+	}
 
   if (cfsetospeed(&ttymodes,new_ospeed) < 0)
-    {
-      perror("cfsetospeed");
-      exit(1);
-    }
+	{
+	  perror("cfsetospeed");
+	  exit(1);
+	}
 
   ttymodes.c_cflag |= CRTSCTS;     /* enable RTS/CTS flow control */
 
   /* Apply hanges */
 
   if (tcsetattr(fd, TCSAFLUSH, &ttymodes) < 0)
-    {
-      perror("tcsetattr");
-      exit(1);
-    }
+	{
+	  perror("tcsetattr");
+	  exit(1);
+	}
 }
 
 /**********************************************************************
@@ -292,17 +292,17 @@ int read_at_least(int fd, unsigned char buf[], int nr)
   int nr_read = 0;
 
   while(remaining > 0)
-    {
-      int read_this_time;
+	{
+	  int read_this_time;
 
-      read_this_time = read(fd, &buf[nr_read], remaining);
+	  read_this_time = read(fd, &buf[nr_read], remaining);
 
-      if (read_this_time == 0) /* Input stream closed? */
+	  if (read_this_time == 0) /* Input stream closed? */
 	return 0;
 
-      nr_read   += read_this_time;
-      remaining -= read_this_time;
-    }
+	  nr_read   += read_this_time;
+	  remaining -= read_this_time;
+	}
 
   return nr_read;
 }
@@ -311,7 +311,7 @@ int read_at_least(int fd, unsigned char buf[], int nr)
  * Name: tbh_read
  * Desc: Reads one message with two-byte-header, filling buffer.
  *       Returns the number of elements used in the buffer, or 0
- *       if the input file has been closed. 
+ *       if the input file has been closed.
  *
  */
 
@@ -319,8 +319,8 @@ int tbh_read(int fd, unsigned char buf[], int buffsize)
 {
   int remaining, msgsize;
 
-  if (read_at_least(fd,buf,TBHSIZE) != TBHSIZE) 
-    return 0;
+  if (read_at_least(fd,buf,TBHSIZE) != TBHSIZE)
+	return 0;
 
   remaining = get_tbh_size(buf);
 
@@ -330,14 +330,14 @@ int tbh_read(int fd, unsigned char buf[], int buffsize)
 			  Min(remaining,(buffsize-TBHSIZE)));
 
   if (msgsize == 0)
-    return 0;
+	return 0;
   else
-    return msgsize + TBHSIZE;
+	return msgsize + TBHSIZE;
 }
 
 /**********************************************************************
  * Name: write_to_tty
- * Desc: write a number of bytes found in the buffer to the tty, 
+ * Desc: write a number of bytes found in the buffer to the tty,
  *       filling the buffer from the given fillfd if neccessary.
  *
  */
@@ -349,14 +349,14 @@ void write_to_tty(int ttyfd, int fillfd, int totalsize, int buffsize,
   totalsize -= buffsize;
 
   while(totalsize > 0)
-    {
-      int readmax;
+	{
+	  int readmax;
 
-      readmax = Min(totalsize,buffmaxsize);
-      buffsize = read(fillfd,buf,readmax);
-      write(ttyfd,buf,buffsize);
-      totalsize -= buffsize;
-    }
+	  readmax = Min(totalsize,buffmaxsize);
+	  buffsize = read(fillfd,buf,readmax);
+	  write(ttyfd,buf,buffsize);
+	  totalsize -= buffsize;
+	}
 
   return;
 }
@@ -382,48 +382,48 @@ int main(int argc, char *argv[])
    * Process command line arguments
    */
 
-  { 
-    int i;
+  {
+	int i;
 
-    for(i = 1 ; i < argc ; i++)
-      {
+	for(i = 1 ; i < argc ; i++)
+	  {
 	if (strcmp(argv[i],"-cbreak") == 0)         /* -cbreak */
 	  {
-	    cbreak = TRUE;
+		cbreak = TRUE;
 	  }
 	else if (strcmp(argv[i],"-debug") == 0)         /* -debug */
 	  {
-	    Debug_Enabled = TRUE;
+		Debug_Enabled = TRUE;
 	  }
 	else if (strcmp(argv[i],"-speed") == 0)     /* -speed  */
 	  {
-	    i += 1;
-	    if (i < argc)
-	      {
+		i += 1;
+		if (i < argc)
+		  {
 		out_speed = in_speed = get_speed(atoi(argv[i]));
 		if (in_speed == B0)
 		  goto error_usage;
-	      }
-	    else
-	      goto error_usage;
+		  }
+		else
+		  goto error_usage;
 	  }
 	else if (strcmp(argv[i],"-tty") == 0)       /* -tty    */
 	  {
-	    i += 1;
-	    if (i < argc)
-	      {
+		i += 1;
+		if (i < argc)
+		  {
 		strncpy(ttyname,argv[i],MAXPATHLEN-1);
-	      }
-	    else
-	      goto error_usage;
+		  }
+		else
+		  goto error_usage;
 	  }
 	else if (strcmp(argv[i],"-erlang") == 0)    /* -erlang */
 	  {
-	    erlang = TRUE;
+		erlang = TRUE;
 	  }
 	else
 	  goto error_usage;
-      }
+	  }
   }
 
   /****************************************
@@ -431,18 +431,18 @@ int main(int argc, char *argv[])
    */
 
   if (!erlang)
-    {
-      ttyfd = open(ttyname,O_RDWR);
-      if (!TtyOpen(ttyfd))
+	{
+	  ttyfd = open(ttyname,O_RDWR);
+	  if (!TtyOpen(ttyfd))
 	{
 	  fprintf(stderr,"Cannot open terminal %s for read and write\n",
 		  ttyname);
 	  exit(1);
 	}
-  
-      set_raw_tty_mode(ttyfd);
-      set_tty_speed(ttyfd,in_speed,out_speed);
-    }
+
+	  set_raw_tty_mode(ttyfd);
+	  set_tty_speed(ttyfd,in_speed,out_speed);
+	}
 
   /****************************************
    * Configure user port
@@ -452,115 +452,115 @@ int main(int argc, char *argv[])
   stdoutfd = fileno(stdout);
 
   if (cbreak)
-    {
-      /* Use non-cononical mode for input */
-      set_raw_tty_mode(stdinfd);
-      fprintf(stderr,"Entering non-canonical mode, exit with ---\n");
-    }
-  
+	{
+	  /* Use non-cononical mode for input */
+	  set_raw_tty_mode(stdinfd);
+	  fprintf(stderr,"Entering non-canonical mode, exit with ---\n");
+	}
+
   /****************************************
    * Start processing loop
    */
 
   {
-    fd_set readfds;           /* file descriptor bit field for select */
-    int    maxfd;             /* max file descriptor for select */
-    unsigned char buf[MAXLENGTH];    /* buffer for transfer between serial-user */
-    int    escapes;           /* number of consecutive escapes in cbreak */
+	fd_set readfds;           /* file descriptor bit field for select */
+	int    maxfd;             /* max file descriptor for select */
+	unsigned char buf[MAXLENGTH];    /* buffer for transfer between serial-user */
+	int    escapes;           /* number of consecutive escapes in cbreak */
 
-    /* Set up initial bit field for select */
-    maxfd = Max(stdinfd,ttyfd);
-    FD_ZERO(&readfds);
+	/* Set up initial bit field for select */
+	maxfd = Max(stdinfd,ttyfd);
+	FD_ZERO(&readfds);
 
-    /* no escapes encountered yet */
-    escapes = 0;
-    
-    while (TRUE)
-      {
+	/* no escapes encountered yet */
+	escapes = 0;
+
+	while (TRUE)
+	  {
 	int i;
 
 	if(TtyOpen(stdinfd))
 	  FD_SET(stdinfd, &readfds);
 	if(TtyOpen(ttyfd))
 	  FD_SET(ttyfd, &readfds);
-	
+
 	i = select(maxfd+1, &readfds, NULLFDS, NULLFDS, NULLTV);
 
 	if (i <= 0)
 	  {
-	    perror("select");
-	    exit(1);
+		perror("select");
+		exit(1);
 	  }
-	
+
 	/******************************
 	 * Data from TTY
 	 */
 	if (TtyOpen(ttyfd) &&
-	    FD_ISSET(ttyfd,&readfds))        /* from serial port */
+		FD_ISSET(ttyfd,&readfds))        /* from serial port */
 	  {
-	    int nr_read;
+		int nr_read;
 
-	    Debug("receiving from TTY\r\n");
+		Debug("receiving from TTY\r\n");
 
-	    FD_CLR(ttyfd,&readfds);
+		FD_CLR(ttyfd,&readfds);
 
-	    nr_read = read(ttyfd,buf,MAXLENGTH);
+		nr_read = read(ttyfd,buf,MAXLENGTH);
 
-	    if (nr_read <= 0)
-	      {
+		if (nr_read <= 0)
+		  {
 		fprintf(stderr,"problem reading from tty\n");
 		exit(1);
-	      }
+		  }
 
-	    if (erlang)
-	      tbh_write(stdoutfd,buf,nr_read);
-	    else
-	      write(stdoutfd,buf,nr_read);
-	      
+		if (erlang)
+		  tbh_write(stdoutfd,buf,nr_read);
+		else
+		  write(stdoutfd,buf,nr_read);
+
 	  }
-	
+
 	/******************************
 	 * Data from controlling process
 	 */
 	if (TtyOpen(stdinfd) &&
-	    FD_ISSET(stdinfd,&readfds))       /* from user */
+		FD_ISSET(stdinfd,&readfds))       /* from user */
 	  {
-	    int nr_read;
-	    int i;
+		int nr_read;
+		int i;
 
-	    FD_CLR(stdinfd,&readfds);
+		FD_CLR(stdinfd,&readfds);
 
-	    /********************
-	     * check for escape in cbreak mode
-	     */
-	    if (cbreak)
-	      {
+		/********************
+		 * check for escape in cbreak mode
+		 */
+		if (cbreak)
+		  {
 		nr_read = read(stdinfd,buf,MAXLENGTH);
 
-		for(i=0 ; i<nr_read ; i++) 
+		for(i=0 ; i<nr_read ; i++)
 		  {
-		    if(buf[i] == '-')
-		      {
+			if(buf[i] == '-')
+			  {
 			escapes++;
 			if(escapes == 3)
 			  {
-			    close(ttyfd);
-			    exit(1);
+				close(ttyfd);
+				exit(1);
 			  }
-		      }
-		    else
-		      {
+			  }
+			else
+			  {
 			escapes=0;
-		      }
+			  }
 		  }
 		if (TtyOpen(ttyfd))
 		  write(ttyfd,buf,nr_read);
-	      }
-	    /********************
-	     * Erlang mode
-	     */
-	    else if (erlang)
-	      {
+		  }
+		/********************
+		 * Erlang mode
+		 */
+		else if (erlang)
+		  {
 		/* Messages from Erlang are structured as:
 		 *   Length:16
 		 *   PacketType:8
@@ -580,121 +580,121 @@ int main(int argc, char *argv[])
 		switch(PacketType(buf))
 		  {
 		  case SEND:	   /******************************/
-		    Debug("received SEND\r\n");
-		    if (TtyOpen(ttyfd))
-		      {
+			Debug("received SEND\r\n");
+			if (TtyOpen(ttyfd))
+			  {
 			write_to_tty(ttyfd, stdinfd,
-				     get_tbh_size(buf) - COMMANDSIZE,
-				     nr_read - HEADERSIZE,
-				     &(buf[HEADERSIZE]),
-				     MAXLENGTH-HEADERSIZE);
-		      }
-		    break;
+					 get_tbh_size(buf) - COMMANDSIZE,
+					 nr_read - HEADERSIZE,
+					 &(buf[HEADERSIZE]),
+					 MAXLENGTH-HEADERSIZE);
+			  }
+			break;
 
 		  case CONNECT:    /******************************/
-		    Debug("received CONNECT\r\n");
-		    /* Reopen the current terminal */
-		    goto open;
-		    break;
+			Debug("received CONNECT\r\n");
+			/* Reopen the current terminal */
+			goto open;
+			break;
 
 		  case DISCONNECT: /******************************/
-		    Debug("received DISCONNECT\r\n");
-		    if (TtyOpen(ttyfd))
-		      set_tty_speed(ttyfd,B0,B0);
-		    goto close;
-		    break;
+			Debug("received DISCONNECT\r\n");
+			if (TtyOpen(ttyfd))
+			  set_tty_speed(ttyfd,B0,B0);
+			goto close;
+			break;
 
 		  case OPEN:	   /******************************/
-		    Debug("received OPEN ");
-		    /* Terminate string */
-		    buf[nr_read] = '\0';
-		    strcpy(ttyname,&buf[HEADERSIZE]);
+			Debug("received OPEN ");
+			/* Terminate string */
+			buf[nr_read] = '\0';
+			strcpy(ttyname,&buf[HEADERSIZE]);
 
 		  open:
-		    Debug1("opening %s \r\n",ttyname);
+			Debug1("opening %s \r\n",ttyname);
 
-		    if (TtyOpen(ttyfd))
-		      close(ttyfd);
+			if (TtyOpen(ttyfd))
+			  close(ttyfd);
 
-		    ttyfd = open(ttyname,O_RDWR);
-		    maxfd = Max(stdinfd,ttyfd);
+			ttyfd = open(ttyname,O_RDWR);
+			maxfd = Max(stdinfd,ttyfd);
 
-		    if (!TtyOpen(ttyfd))
-		      {
+			if (!TtyOpen(ttyfd))
+			  {
 			fprintf(stderr,"Cannot open terminal %s for read ",
 				&buf[HEADERSIZE]);
 			fprintf(stderr,"and write\n");
 			exit(1);
-		      }
+			  }
 
-		    set_raw_tty_mode(ttyfd);
-		    set_tty_speed(ttyfd,in_speed,out_speed);
-		    break;
+			set_raw_tty_mode(ttyfd);
+			set_tty_speed(ttyfd,in_speed,out_speed);
+			break;
 
 		  case CLOSE:	   /******************************/
-		    Debug("received CLOSE\r\n");
+			Debug("received CLOSE\r\n");
 		  close:
-		    if (TtyOpen(ttyfd))
-		      close(ttyfd);
-		    ttyfd = -1;
-		    break;
+			if (TtyOpen(ttyfd))
+			  close(ttyfd);
+			ttyfd = -1;
+			break;
 
 		  case SPEED:	   /******************************/
-		    {
-		      int off;
- 
-		      in_speed = get_speed(atoi(&buf[HEADERSIZE]));
+			{
+			  int off;
 
-		      /* Null-terminate string */
-		      buf[nr_read] = '\0';
+			  in_speed = get_speed(atoi(&buf[HEADERSIZE]));
 
-		      /* Find start of second speed */
-		      for(off=HEADERSIZE ;
+			  /* Null-terminate string */
+			  buf[nr_read] = '\0';
+
+			  /* Find start of second speed */
+			  for(off=HEADERSIZE ;
 			  isdigit(buf[off]) && (off < MAXLENGTH) ;
 			  off += 1);
 
-		      out_speed = get_speed(atoi(&buf[off]));
+			  out_speed = get_speed(atoi(&buf[off]));
 
-		      Debug1("     raw SPEED %s\r\n",&buf[HEADERSIZE]);
-		      Debug2("received SPEED %ud %ud\r\n",
-			     (unsigned int) in_speed,
-			     (unsigned int) out_speed);
+			  Debug1("     raw SPEED %s\r\n",&buf[HEADERSIZE]);
+			  Debug2("received SPEED %ud %ud\r\n",
+				 (unsigned int) in_speed,
+				 (unsigned int) out_speed);
 
-		      if(TtyOpen(ttyfd))
+			  if(TtyOpen(ttyfd))
 			set_tty_speed(ttyfd, in_speed, out_speed);
-		      break;
-		    }
+			  break;
+			}
 
 		  case PARITY_ODD: /******************************/
-		    break;
+			break;
 
 		  case PARITY_EVEN:/******************************/
-		    break;
+			break;
 
 		  case BREAK:      /******************************/
-		    if (TtyOpen(ttyfd))
-		      (void) tcsendbreak(ttyfd,BREAKPERIOD);
-		    break;
+			if (TtyOpen(ttyfd))
+			  (void) tcsendbreak(ttyfd,BREAKPERIOD);
+			break;
 
 		  default:
-		    fprintf(stderr,"%s: unknown command from Erlang\n",
-			    argv[0]);
-		    break;
+			fprintf(stderr,"%s: unknown command from Erlang\n",
+				argv[0]);
+			break;
 		  }
-	      }
-	    else
-	      {
+		  }
+		else
+		  {
 		nr_read = read(stdinfd,buf,MAXLENGTH);
 		write(ttyfd,buf,nr_read);
-	      }
+		  }
 
-	    if (nr_read <= 0)
-	      {
+		if (nr_read <= 0)
+		  {
 		fprintf(stderr,"problem reading from stdin\n");
 		exit(0);
-	      }
+		  }
 	  }
-      }
+	  }
   }
 
   /****************************************

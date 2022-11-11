@@ -1,8 +1,7 @@
 # erlang-serial
 
-This is a port program with erlang driver for serial communication,
-originally written by Johan Bevemyr in 1996 and sporadically
-maintained by Tony Garnock-Jones from 2007 onwards.
+This is a port program with erlang driver for serial communication, originally written by Johan Bevemyr in 1996 and sporadically maintained by Tony Garnock-Jones from 2007 onwards.
+
 
 ## Installation
 
@@ -49,15 +48,15 @@ process can handle the data by implementing a function like the following:
 ```erlang
 listen() ->
   receive
-    % Receive data from the serial port on the caller's PID.
-    {data, Bytes} ->
-      io:format("~s", [Bytes]),
-      listen()
+	% Receive data from the serial port on the caller's PID.
+	{data, Bytes} ->
+	  io:format("~s", [Bytes]),
+	  listen()
   after
-    % Stop listening after 5 seconds of inactivity.
-    5000 ->
-      io:format("~n"),
-      ok
+	% Stop listening after 5 seconds of inactivity.
+	5000 ->
+	  io:format("~n"),
+	  ok
   end.
 ```
 
@@ -65,7 +64,7 @@ See `examples/terminal.erl` for more example code (using the now-obsolete `gs` m
 
 ## License
 
-Copyright (c) 1996, 1999 Johan Bevemyr  
+Copyright (c) 1996, 1999 Johan Bevemyr
 Copyright (c) 2007, 2009 Tony Garnock-Jones
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

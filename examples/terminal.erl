@@ -5,17 +5,17 @@
 
 %% Copyright (c) 1996, 1999 Johan Bevemyr
 %% Copyright (c) 2007, 2009 Tony Garnock-Jones
-%% 
+%%
 %% Permission is hereby granted, free of charge, to any person obtaining a copy
 %% of this software and associated documentation files (the "Software"), to deal
 %% in the Software without restriction, including without limitation the rights
 %% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 %% copies of the Software, and to permit persons to whom the Software is
 %% furnished to do so, subject to the following conditions:
-%% 
+%%
 %% The above copyright notice and this permission notice shall be included in
 %% all copies or substantial portions of the Software.
-%% 
+%%
 %% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 %% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 %% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,12 +24,12 @@
 %% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 %% THE SOFTWARE.
 %%
-%    -*- Erlang -*- 
+%    -*- Erlang -*-
 %    File:	terminal.erl  (~jb/serialport/terminal.erl)
 %    Author:	Johan Bevemyr
 %    Created:	Wed Oct 23 14:02:13 1996
-%    Purpose:   
- 
+%    Purpose:
+
 -module(terminal).
 
 -export([start/1, gs_start/1, gs_init/1]).
@@ -99,11 +99,11 @@ gs_start(Speed) -> spawn(terminal, gs_init, [Speed]).
 gs_init(Speed) ->
     I=gs:start(),
     Win=gs:create(window, I,
-                  [{width, 500},{height, 400},
-                   {title,"terminal"},{map, true},{keypress,true}]),
+		  [{width, 500},{height, 400},
+		   {title,"terminal"},{map, true},{keypress,true}]),
     gs:create(editor, editor, Win,
-              [{x,0},{y, 30},{width,480},{height,350},
-               {enable,false},{vscroll,right},{wrap,char}]),
+	      [{x,0},{y, 30},{width,480},{height,350},
+	       {enable,false},{vscroll,right},{wrap,char}]),
     Bar = gs:create(menubar,Win,[]),
     Fmb = gs:create(menubutton,Bar,[{label,{text,"File"}}]),
     Fmnu= gs:create(menu,Fmb,[]),
@@ -142,18 +142,18 @@ gs_loop(Serial) ->
 	{data, Bytes} ->
 	    TextStr = gs_remove_ctrl(binary_to_list(Bytes)),
 	    gs:config(editor,[{enable, true}]),
-            gs:config(editor,[{insert, {insert, TextStr}}]),
+	    gs:config(editor,[{insert, {insert, TextStr}}]),
 	    gs:config(editor,[{enable, false}]),
 %	    gs:config(editor,[{enable, false}, {insert, {insert, TextStr}},
 %			      {enable, true}])
 	    TextSize = gs:read(editor,size),
-    	    gs:config(editor,[{vscrollpos,TextSize}]);
-	
+	    gs:config(editor,[{vscrollpos,TextSize}]);
+
 	{gs,_ObjectId,keypress,_Data,[Keysym,KeyCode,_Shift,Control]} ->
 	    case KeyCode of
 		X when X > 32, X < 97 ->
 		    case Control of
-			0 -> 
+			0 ->
 			    Serial ! {send, [KeyCode]};
 			1 ->
 			    Serial ! {send, [KeyCode-65]}
@@ -187,8 +187,7 @@ gs_loop(Serial) ->
 	{gs,_ObjectId,destroy,[],[]} ->
 	    Serial ! stop,
 	    exit(normal);
-        Other ->
-            io:format("Other:~w~n",[Other])
+	Other ->
+	    io:format("Other:~w~n",[Other])
     end,
     gs_loop(Serial).
-

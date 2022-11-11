@@ -20,12 +20,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-/*    -*- C -*- 
+/*    -*- C -*-
  *    File:	 serial.h  (~jb/serialport/serial.h)
  *    Author:	 Johan Bevemyr
  *    Created:	 Sun Oct 20 01:36:03 1996
- *    Purpose:   
- */ 
+ *    Purpose:
+ */
 
 #ifndef SERIAL_H
 #define SERIAL_H
