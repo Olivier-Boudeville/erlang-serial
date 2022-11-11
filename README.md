@@ -2,7 +2,7 @@
 
 This is a port program with an Erlang driver for serial communication, originally written by Johan Bevemyr in 1996 and sporadically maintained by Tony Garnock-Jones from 2007 onwards.
 
-Thi specific repository is a subsequent fork of these works, a fork made by Olivier Boudeville (olivier (dot) boudeville (at) esperide (dot) com) in order to better support devices exposing a serial interface like Enocean gateways (refer to https://oceanic.esperide.org/index.html#software-prerequisites for further information) and presumably Arduino platforms.
+Thi specific repository is a subsequent fork of these works, made by Olivier Boudeville (`olivier (dot) boudeville (at) esperide (dot) com`) in order to better support devices exposing a serial interface like Enocean gateways (refer to [Ceylan-Oceanic](https://oceanic.esperide.org/index.html#software-prerequisites) for further information) and presumably Arduino platforms.
 
 The main change done in this fork consists in disabling the *Request to Send* (RTS) and *Clear to Send* (CTS) signals (RTS/CTS flow control), which prevented proper communication with said devices. This change was directly taken from [this commit](https://github.com/knewter/erlang-serial/commit/fb24371ed5d143836cc8eeab1e0680e03c1a0041).
 
@@ -14,8 +14,7 @@ Many thanks to the original authors.
 This library is designed to run as an Erlang library, not an application dependency. To install this library, clone the library to a location of your choice and run the following from the command line:
 
 ```text
-make
-DESTDIR=/usr/lib make install
+make && DESTDIR=/usr/lib make install
 ```
 
 Adjust the `DESTDIR` path accordingly if Erlang is not installed at
@@ -40,7 +39,7 @@ $ cd erlang-serial
 $ make && DESTDIR=. make install
 ```
 
-Afterwards one just has to ensure that ``~/Software/erlang-serial/ebin`` is listed in one's code path.
+Afterwards one just has to ensure that the ``~/Software/erlang-serial/ebin`` directory is listed in one's code path.
 
 
 
@@ -60,8 +59,7 @@ Sending a message out the serial port:
 SerialPort ! {send, "Hello World\r\n"}
 ```
 
-Data is received as a message to the process that called `serial:start()`. That
-process can handle the data by implementing a function like the following:
+Data is received as a message to the process that called `serial:start()`. That process can handle the data by implementing a function like the following:
 
 ```erlang
 listen() ->
@@ -83,14 +81,16 @@ See `examples/terminal.erl` for more example code (using the now-obsolete `gs` m
 
 ## Debugging
 
-One may rely on the free software ``cutecom`` to compare inputs/outputs done from Erlang with manually-specified ones.
+One may rely on the free software ``cutecom`` in order to compare input/output as done from Erlang with manually-specified counterpart ones.
 
-Note that, if modifying erlang-serial's source code, recompiling is not enough, it should be reinstalled as well; run for example from its root ``make && DESTDIR=. make install``.
+Note that, if modifying erlang-serial's source code, recompiling it is not enough, as it should be reinstalled as well. Run for example from its root: ``make && DESTDIR=. make install``.
 
 
 ## Additional Information
 
-The C "legacy" code has been formatted as discussed in `this section <https://seaplus.esperide.org/#c-c-code-formatting>`_ of Ceylan-Seaplus.
+The C "legacy" code has been formatted as discussed in [this section](https://seaplus.esperide.org/#c-c-code-formatting>`_) of Ceylan-Seaplus.
+
+As for the formatting of the Erlang code, see [this section](https://howtos.esperide.org/Erlang.html#formatting-erlang-code) of Ceylan-HOWTO.
 
 
 ## License
