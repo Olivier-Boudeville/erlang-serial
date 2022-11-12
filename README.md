@@ -88,7 +88,7 @@ Note that, if modifying erlang-serial's source code, recompiling it is not enoug
 
 ## Additional Information
 
-The C "legacy" code has been formatted as discussed in [this section](https://seaplus.esperide.org/#c-c-code-formatting>`_) of Ceylan-Seaplus.
+The C "legacy" code has been formatted as discussed in [this section](https://seaplus.esperide.org/#c-c-code-formatting) of Ceylan-Seaplus.
 
 As for the formatting of the Erlang code, see [this section](https://howtos.esperide.org/Erlang.html#formatting-erlang-code) of Ceylan-HOWTO.
 
