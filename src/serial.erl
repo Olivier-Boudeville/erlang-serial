@@ -28,7 +28,7 @@
 -module(serial).
 -author('jb@erix.ericsson.se').
 
--export([start/0, start/1, start/2, init/1, loop/2]).
+-export([start/0, start/1, start/2, init/1, init/2, loop/2]).
 
 -include("serial.hrl").
 
