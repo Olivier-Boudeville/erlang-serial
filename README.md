@@ -1,3 +1,5 @@
+[![.github/workflows/erlang-ci.yml](https://github.com/Olivier-Boudeville/erlang-serial/actions/workflows/erlang-ci.yml/badge.svg)](https://github.com/Olivier-Boudeville/erlang-serial/actions/workflows/erlang-ci.yml)
+
 # About erlang-serial
 
 This is a port program with an Erlang driver for serial communication, originally written by Johan Bevemyr in 1996 and sporadically maintained by Tony Garnock-Jones from 2007 onwards.
