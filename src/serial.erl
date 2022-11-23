@@ -1,5 +1,7 @@
 %% Copyright (c) 1996, 1999 Johan Bevemyr
 %% Copyright (c) 2007, 2009 Tony Garnock-Jones
+%% Copyright (c) 2022 Olivier Boudeville
+%%          [olivier (dot) boudeville (at) esperide (dot) com]
 %%
 %% Permission is hereby granted, free of charge, to any person obtaining a copy
 %% of this software and associated documentation files (the "Software"), to deal
@@ -75,26 +77,34 @@ init(Pid) ->
 	init(_SerialPrivDir=priv_dir(), Pid).
 
 
-loop(Pid, Port) ->
+serial_loop(Pid, Port) ->
+
 	receive
+
 		{Port, {data, Bytes}} ->
 			Pid ! {data, Bytes},
-			serial:loop(Pid, Port);
+			serial_loop(Pid, Port);
+
 		{send, Bytes} ->
 			send_serial(Port, [?SEND, Bytes]),
-			serial:loop(Pid, Port);
-		{connect} ->
+			serial_loop(Pid, Port);
+
+		connect ->
 			send_serial(Port, [?CONNECT]),
-			serial:loop(Pid, Port);
-		{disconnect} ->
+			serial_loop(Pid, Port);
+
+		disconnect ->
 			send_serial(Port, [?DISCONNECT]),
-			serial:loop(Pid, Port);
+			serial_loop(Pid, Port);
+
 		{open, TTY} ->
 			send_serial(Port, [?OPEN, TTY]),
-			serial:loop(Pid, Port);
-		{close} ->
+			serial_loop(Pid, Port);
+
+		close ->
 			send_serial(Port, [?CLOSE]),
-			serial:loop(Pid, Port);
+			serial_loop(Pid, Port);
+
 		{speed, NewInSpeed, NewOutSpeed} ->
 			send_serial(Port, [
 				?SPEED,
@@ -103,7 +113,8 @@ loop(Pid, Port) ->
 				integer_to_list(NewOutSpeed),
 				0
 			]),
-			serial:loop(Pid, Port);
+			serial_loop(Pid, Port);
+
 		{speed, NewSpeed} ->
 			send_serial(Port, [
 				?SPEED,
@@ -112,28 +123,46 @@ loop(Pid, Port) ->
 				integer_to_list(NewSpeed),
 				0
 			]),
-			serial:loop(Pid, Port);
-		{parity_odd} ->
+			serial_loop(Pid, Port);
+
+		parity_odd ->
 			send_serial(Port, [?PARITY_ODD]),
-			serial:loop(Pid, Port);
-		{parity_even} ->
+			serial_loop(Pid, Port);
+
+		parity_even ->
 			send_serial(Port, [?PARITY_EVEN]),
-			serial:loop(Pid, Port);
-		{break} ->
+			serial_loop(Pid, Port);
+
+		break ->
 			send_serial(Port, [?BREAK]),
-			serial:loop(Pid, Port);
+			serial_loop(Pid, Port);
+
 		stop ->
+			% Not knowing whether port shall be closed:
+			%send_serial(Port, [?CLOSE]),
 			stopped;
+
+		% For a synchronous termination:
+		{ stop, RequesterPid } ->
+			% Not knowing whether port shall be closed:
+			%send_serial(Port, [?CLOSE]),
+			RequesterPid ! serial_stopped,
+			stopped;
+
 		{'EXIT', Port, Why} ->
 			io:format("Port exited with reason ~w~n", [Why]),
 			exit(Why);
+
 		{'EXIT', Linked, Why} ->
 			io:format("Linked ~w exited with reason ~w~n", [Linked, Why]),
 			exit(Why);
+
 		OtherError ->
 			io:format("Received unknown message ~w~n", [OtherError]),
-			serial:loop(Pid, Port)
+			serial_loop(Pid, Port)
+
 	end.
+
 
 send_serial(Port, Message) ->
 	Port ! {self(), {command, Message}}.

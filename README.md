@@ -8,6 +8,7 @@ This [specific repository](https://github.com/Olivier-Boudeville/erlang-serial) 
 
 The main changes done in this fork consists in:
 - disabling the *Request to Send* (RTS) and *Clear to Send* (CTS) signals (RTS/CTS flow control), which prevented proper communication with said devices; this change was directly taken from [this commit](https://github.com/knewter/erlang-serial/commit/fb24371ed5d143836cc8eeab1e0680e03c1a0041)
+- modified the message-based API (e.g. ``close`` must be sent rather than ``{close}``, synchronous termination added)
 - enabling a build also with rebar3 and adding a bit of continuous integration
 - reformatting the legacy C and Erlang code for extra clarity
 
@@ -98,6 +99,8 @@ Note that, if modifying erlang-serial's source code, recompiling it is not enoug
 The C "legacy" code has been formatted as discussed in [this section](https://seaplus.esperide.org/#c-c-code-formatting) of Ceylan-Seaplus.
 
 As for the formatting of the Erlang code, see [this section](https://howtos.esperide.org/Erlang.html#formatting-erlang-code) of Ceylan-HOWTO.
+
+In both cases we are bound over time to apply the formatting conventions that are uniform across the Ceylan project.
 
 
 ## License
