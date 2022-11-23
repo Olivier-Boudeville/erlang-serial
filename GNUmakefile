@@ -24,7 +24,7 @@
 #  Created:	 Fri Oct 18 09:59:34 1996
 
 
-.PHONY: rebuild
+.PHONY: all install rebuild test clean echo-version
 
 VSN = 1.1
 INSTALL_DIR=serial-$(VSN)
@@ -77,6 +77,9 @@ priv/bin/serial: $(OBJECT_FILES) priv/bin
 
 rebuild: clean all
 	@DESTDIR=. $(MAKE) install
+
+
+test:
 
 
 clean:
