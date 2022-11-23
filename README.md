@@ -2,9 +2,12 @@
 
 This is a port program with an Erlang driver for serial communication, originally written by Johan Bevemyr in 1996 and sporadically maintained by Tony Garnock-Jones from 2007 onwards.
 
-Thi specific repository is a subsequent fork of these works, made by Olivier Boudeville (`olivier (dot) boudeville (at) esperide (dot) com`) in order to better support devices exposing a serial interface like Enocean gateways (refer to [Ceylan-Oceanic](https://oceanic.esperide.org/index.html#software-prerequisites) for further information) and presumably Arduino platforms.
+This [specific repository(https://github.com/Olivier-Boudeville/erlang-serial) is a subsequent fork of these works, made by Olivier Boudeville (`olivier (dot) boudeville (at) esperide (dot) com`) in order to better support devices exposing a serial interface like Enocean gateways (refer to [Ceylan-Oceanic](https://oceanic.esperide.org/index.html#software-prerequisites) for further information) and presumably Arduino platforms.
 
-The main change done in this fork consists in disabling the *Request to Send* (RTS) and *Clear to Send* (CTS) signals (RTS/CTS flow control), which prevented proper communication with said devices. This change was directly taken from [this commit](https://github.com/knewter/erlang-serial/commit/fb24371ed5d143836cc8eeab1e0680e03c1a0041).
+The main changes done in this fork consists in:
+- disabling the *Request to Send* (RTS) and *Clear to Send* (CTS) signals (RTS/CTS flow control), which prevented proper communication with said devices; this change was directly taken from [this commit](https://github.com/knewter/erlang-serial/commit/fb24371ed5d143836cc8eeab1e0680e03c1a0041)
+- enabling a build also with rebar3
+- reformatting the legacy C and Erlang code for extra clarity
 
 Many thanks to the original authors.
 
@@ -41,6 +44,8 @@ $ make && DESTDIR=. make install
 
 Afterwards one just has to ensure that the ``~/Software/erlang-serial/ebin`` directory is listed in one's code path.
 
+
+Alternatively, one may use the rebar3 preliminary support we added; run for that ``rebar3 compile``.
 
 
 ## Examples
