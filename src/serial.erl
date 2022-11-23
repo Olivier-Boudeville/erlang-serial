@@ -30,7 +30,7 @@
 -module(serial).
 -author('jb@erix.ericsson.se').
 
--export([start/0, start/1, start/2, init/1, init/2, loop/2]).
+-export([start/0, start/1, start/2, init/1, init/2]).
 
 -include("serial.hrl").
 
@@ -70,7 +70,7 @@ init(SerialPrivDir, Pid) ->
 	process_flag(trap_exit, true),
 	Port = open_port({spawn, SerialPrivDir ++ "/bin/serial -erlang"},
 					 [binary, {packet, 2}]),
-	loop(Pid, Port).
+	serial_loop(Pid, Port).
 
 
 init(Pid) ->
