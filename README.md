@@ -102,6 +102,7 @@ As for the formatting of the Erlang code, see [this section](https://howtos.espe
 
 Copyright (c) 1996, 1999 Johan Bevemyr
 Copyright (c) 2007, 2009 Tony Garnock-Jones
+Copyright (c) 2022       Olivier Boudeville
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
