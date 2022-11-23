@@ -1,4 +1,4 @@
-![Erlang CI](https://github.com/Olivier-Boudeville/erlang-serial/workflows/Erlang%20CI/badge.svg?event=push)
+[![Erlang CI](https://github.com/Olivier-Boudeville/erlang-serial/actions/workflows/erlang-ci.yml/badge.svg?event=push)](https://github.com/Olivier-Boudeville/erlang-serial/actions/workflows/erlang-ci.yml)
 
 # About erlang-serial
 
