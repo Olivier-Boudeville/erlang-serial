@@ -1,4 +1,4 @@
-[![.github/workflows/erlang-ci.yml](https://github.com/Olivier-Boudeville/erlang-serial/actions/workflows/erlang-ci.yml/badge.svg)](https://github.com/Olivier-Boudeville/erlang-serial/actions/workflows/erlang-ci.yml)
+![Erlang CI](https://github.com/Olivier-Boudeville/erlang-serial/workflows/Erlang%20CI/badge.svg?event=push)
 
 # About erlang-serial
 
@@ -8,7 +8,7 @@ This [specific repository](https://github.com/Olivier-Boudeville/erlang-serial) 
 
 The main changes done in this fork consists in:
 - disabling the *Request to Send* (RTS) and *Clear to Send* (CTS) signals (RTS/CTS flow control), which prevented proper communication with said devices; this change was directly taken from [this commit](https://github.com/knewter/erlang-serial/commit/fb24371ed5d143836cc8eeab1e0680e03c1a0041)
-- enabling a build also with rebar3
+- enabling a build also with rebar3 and adding a bit of continuous integration
 - reformatting the legacy C and Erlang code for extra clarity
 
 Many thanks to the original authors.
@@ -103,7 +103,9 @@ As for the formatting of the Erlang code, see [this section](https://howtos.espe
 ## License
 
 Copyright (c) 1996, 1999 Johan Bevemyr
+
 Copyright (c) 2007, 2009 Tony Garnock-Jones
+
 Copyright (c) 2022       Olivier Boudeville
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
