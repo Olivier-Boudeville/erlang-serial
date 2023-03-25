@@ -138,14 +138,14 @@ serial_loop(Pid, Port) ->
 			serial_loop(Pid, Port);
 
 		stop ->
-			io:format("Stop requested, closiing port ~w~n",[Port]),
+			io:format("Stop requested, closing port ~w~n",[Port]),
 			% Not knowing whether port shall be closed:
 			send_serial(Port, [?CLOSE]),
 			stopped;
 
 		% For a synchronous termination:
 		{stop, RequesterPid} ->
-			io:format("Stop requested by ~w, closiing port ~w~n",
+			io:format("Stop requested by ~w, closing port ~w~n",
 					  [RequesterPid, Port]),
 			% Not knowing whether port shall be closed:
 			send_serial(Port, [?CLOSE]),
