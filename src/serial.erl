@@ -1,7 +1,7 @@
 %% Copyright (c) 1996, 1999 Johan Bevemyr
 %% Copyright (c) 2007, 2009 Tony Garnock-Jones
 %% Copyright (c) 2022 Olivier Boudeville
-%%          [olivier (dot) boudeville (at) esperide (dot) com]
+%%                    [olivier (dot) boudeville (at) esperide (dot) com]
 %%
 %% Permission is hereby granted, free of charge, to any person obtaining a copy
 %% of this software and associated documentation files (the "Software"), to deal
@@ -45,19 +45,16 @@ priv_dir() ->
 start() ->
 	start([]).
 
-
 % From an escript, we might inherit from an incorrect 'priv' directory (e.g. the
 % one of Oceanic), so we provide a way of setting it explicitly.
 %
-start(Options,SerialPrivDir) ->
-	Pid = spawn_link(serial, init, [SerialPrivDir,self()]),
+start(Options, SerialPrivDir) ->
+	Pid = spawn_link(serial, init, [SerialPrivDir, self()]),
 	process_options(Pid, Options),
 	Pid.
 
-
 start(Options) ->
-	start(Options,_SerialPrivDir=priv_dir()).
-
+	start(Options, _SerialPrivDir = priv_dir()).
 
 process_options(_Pid, []) ->
 	done;
@@ -65,46 +62,37 @@ process_options(Pid, [Opt | Opts]) ->
 	Pid ! Opt,
 	process_options(Pid, Opts).
 
-
 init(SerialPrivDir, Pid) ->
 	process_flag(trap_exit, true),
-	Port = open_port({spawn, SerialPrivDir ++ "/bin/serial -erlang"},
-					 [binary, {packet, 2}]),
+	Port = open_port(
+		{spawn, SerialPrivDir ++ "/bin/serial -erlang"},
+		[binary, {packet, 2}]
+	),
 	serial_loop(Pid, Port).
 
-
 init(Pid) ->
-	init(_SerialPrivDir=priv_dir(), Pid).
-
+	init(_SerialPrivDir = priv_dir(), Pid).
 
 serial_loop(Pid, Port) ->
-
 	receive
-
 		{Port, {data, Bytes}} ->
 			Pid ! {data, Bytes},
 			serial_loop(Pid, Port);
-
 		{send, Bytes} ->
 			send_serial(Port, [?SEND, Bytes]),
 			serial_loop(Pid, Port);
-
 		connect ->
 			send_serial(Port, [?CONNECT]),
 			serial_loop(Pid, Port);
-
 		disconnect ->
 			send_serial(Port, [?DISCONNECT]),
 			serial_loop(Pid, Port);
-
 		{open, TTY} ->
 			send_serial(Port, [?OPEN, TTY]),
 			serial_loop(Pid, Port);
-
 		close ->
 			send_serial(Port, [?CLOSE]),
 			serial_loop(Pid, Port);
-
 		{speed, NewInSpeed, NewOutSpeed} ->
 			send_serial(Port, [
 				?SPEED,
@@ -114,7 +102,6 @@ serial_loop(Pid, Port) ->
 				0
 			]),
 			serial_loop(Pid, Port);
-
 		{speed, NewSpeed} ->
 			send_serial(Port, [
 				?SPEED,
@@ -124,48 +111,40 @@ serial_loop(Pid, Port) ->
 				0
 			]),
 			serial_loop(Pid, Port);
-
 		parity_odd ->
 			send_serial(Port, [?PARITY_ODD]),
 			serial_loop(Pid, Port);
-
 		parity_even ->
 			send_serial(Port, [?PARITY_EVEN]),
 			serial_loop(Pid, Port);
-
 		break ->
 			send_serial(Port, [?BREAK]),
 			serial_loop(Pid, Port);
-
 		stop ->
-			io:format("Stop requested, closing port ~w~n",[Port]),
+			io:format("Stop requested, closing port ~w~n", [Port]),
 			% Not knowing whether port shall be closed:
 			send_serial(Port, [?CLOSE]),
 			stopped;
-
 		% For a synchronous termination:
 		{stop, RequesterPid} ->
-			io:format("Stop requested by ~w, closing port ~w~n",
-					  [RequesterPid, Port]),
+			io:format(
+				"Stop requested by ~w, closing port ~w~n",
+				[RequesterPid, Port]
+			),
 			% Not knowing whether port shall be closed:
 			send_serial(Port, [?CLOSE]),
 			RequesterPid ! serial_stopped,
 			stopped;
-
 		{'EXIT', Port, Why} ->
 			io:format("Port exited with reason ~w~n", [Why]),
 			exit(Why);
-
 		{'EXIT', Linked, Why} ->
 			io:format("Linked ~w exited with reason ~w~n", [Linked, Why]),
 			exit(Why);
-
 		OtherError ->
 			io:format("Received unknown message ~w~n", [OtherError]),
 			serial_loop(Pid, Port)
-
 	end.
-
 
 send_serial(Port, Message) ->
 	Port ! {self(), {command, Message}}.
