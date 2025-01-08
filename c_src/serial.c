@@ -1,7 +1,7 @@
 /*
 Copyright (c) 1996, 1999 Johan Bevemyr
 Copyright (c) 2007, 2009 Tony Garnock-Jones
-Copyright (c) 2022, 2023 Olivier Boudeville
+Copyright (c) 2022, 2025 Olivier Boudeville
 						 [olivier (dot) boudeville (at) esperide (dot) com]
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,6 +22,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+
 /*    -*- C -*-
  *    File: serial.c  (~jb/serialport/serial.c)
  *    Author: Johan Bevemyr
@@ -29,11 +30,14 @@ THE SOFTWARE.
  *    Purpose: Provide Erlang with access to the serial port.
  */
 
-/* This program communicates through the following protocol when run with
- * -erlang:
+
+/**
+ * This program allows interacting with a serial port, seen as a TTY.
+ *
+ * It communicates through the following protocol when run with -erlang:
  *
  *   (all messages start with a two-byte header containing the size of the
- *   message)
+ *   message payload)
  *
  *   SEND DATA
  *        Transmits DATA on the currently open tty
@@ -58,6 +62,13 @@ THE SOFTWARE.
  *
  *   BREAK
  *        Sends break.
+ *
+ *   REPORT
+ *        Sends back a report; useful to check serial's health (no freeze).
+ *
+ * When this executable sends back information (through the output file
+ * descriptor), the whole stream is prefixed with a (one-byte) selection header,
+ * to specify the type of that information (e.g. data, log message).
  *
  *   usage: serial [-debug] [-cbreak] [-erlang] [-speed <bit rate>] [-tty <dev>]
  *          bit rate is one of
@@ -96,14 +107,16 @@ bit_rate bitrate_table[MAXSPEED] = {
 	{57600, B57600}, {115200, B115200}, {230400, B230400}
 };
 
-/**********************************************************************
- * Name: get_speed
- *
- * Desc: Returns the speed_t value associated with a given bit_rate
- *       according to the bitrate_table. B0 is returned if no matching entry
- *       is found.
- */
 
+#define DATA_SELECTION_HEADER    0
+#define MESSAGE_SELECTION_HEADER 1
+
+
+/**
+ * Returns the speed_t value associated with a given bit_rate according to the
+ * bitrate_table. B0 is returned if no matching entry is found.
+ *
+ */
 speed_t get_speed(int speed) {
 	int i;
 
@@ -118,19 +131,18 @@ speed_t get_speed(int speed) {
 		return bitrate_table[i].speed;
 }
 
-/**********************************************************************
- * Name: set_raw_tty_mode
- *
- * Desc: Configures the given tty for raw-mode.
- */
 
+/**
+ * Configures the given tty for raw-mode.
+ *
+ */
 void set_raw_tty_mode(int fd) {
 	struct termios ttymodes;
 
 	/* Get ttymodes */
 
 	if (tcgetattr(fd, &ttymodes) < 0) {
-		perror("tcgetattr");
+		perror("serial: tcgetattr failed.");
 		exit(1);
 	}
 
@@ -168,35 +180,33 @@ void set_raw_tty_mode(int fd) {
 	/* Apply changes */
 
 	if (tcsetattr(fd, TCSAFLUSH, &ttymodes) < 0) {
-		perror("tcsetattr");
-		exit(1);
+		perror("serial: tcsetattr failed.");
+		exit(2);
 	}
 }
 
-/**********************************************************************
- * Name: set_tty_speed
- *
- * Desc: set input and output speeds of a given connection.
- */
 
+/**
+ * Sets input and output speeds of a given connection.
+ */
 void set_tty_speed(int fd, speed_t new_ispeed, speed_t new_ospeed) {
 	struct termios ttymodes;
 
 	/* Get ttymodes */
 
 	if (tcgetattr(fd, &ttymodes) < 0) {
-		perror("tcgetattr");
-		exit(1);
+		perror("serial: tcgetattr failed.");
+		exit(3);
 	}
 
 	if (cfsetispeed(&ttymodes, new_ispeed) < 0) {
-		perror("cfsetispeed");
-		exit(1);
+		perror("serial: cfsetispeed failed.");
+		exit(4);
 	}
 
 	if (cfsetospeed(&ttymodes, new_ospeed) < 0) {
-		perror("cfsetospeed");
-		exit(1);
+		perror("serial: cfsetospeed failed.");
+		exit(5);
 	}
 
 	// ttymodes.c_cflag |= CRTSCTS;     /* enable RTS/CTS flow control */
@@ -204,41 +214,40 @@ void set_tty_speed(int fd, speed_t new_ispeed, speed_t new_ospeed) {
 
 	// Apply changes:
 	if (tcsetattr(fd, TCSAFLUSH, &ttymodes) < 0) {
-		perror("tcsetattr");
-		exit(1);
+		perror("serial: tcsetattr failed.");
+		exit(6);
 	}
 }
 
-/**********************************************************************
- * Name: get_tbh_size
- * Desc: returns the size of a two_byte_header message (from Erlang).
- */
 
+/**
+ * Returns the size of a two_byte_header message (from Erlang).
+ */
 int get_tbh_size(unsigned char buf[]) {
 	return (((int)buf[0]) << 8) + ((int)buf[1]);
 }
 
-/**********************************************************************
- * Name: set_tbh_size
- * Desc: sets the first two bytes of the buffer to its size
- */
 
-void set_tbh_size(unsigned char buf[], int size) {
-	buf[1] = (unsigned char)(size & 0xff);
-	buf[0] = (unsigned char)((size >> 8) & 0xff);
+/**
+ * Sets the first two bytes of the buffer to its size.
+ */
+void set_tbh_size(unsigned char buffer[], int size) {
+	buffer[1] = (unsigned char)(size & 0xff);
+	buffer[0] = (unsigned char)((size >> 8) & 0xff);
 	return;
 }
 
-/**********************************************************************
- * Name: tbh_write
- * Desc: writes the buffer to a file descriptor, adding size info
- *       at the beginning.
+
+/**
+ * Writes the specified applicative buffer (e.g. for data or log messages) to a
+ * file descriptor, adding size information (2-byte header) at the beginning.
+ *
  */
+void tbh_write(int fd, const unsigned char buf[], int buffsize) {
 
-void tbh_write(int fd, unsigned char buf[], int buffsize) {
-	char header_buf[TBHSIZE];
+	unsigned char header_buf[TBHSIZE];
 
-	Debug1("tbh_write: send message of size %d\r\n", buffsize);
+	Debug1("tbh_write: send message of size %d.\r\n", buffsize);
 
 	/* First, write two byte header */
 	set_tbh_size(header_buf, buffsize);
@@ -250,13 +259,38 @@ void tbh_write(int fd, unsigned char buf[], int buffsize) {
 	return;
 }
 
-/**********************************************************************
- * Name: read_at_least(fd,buf,nr)
- * Desc: Read at least nr bytes and put them into buf. Return the number
- *       of bytes read, i.e. nr.
- * Returns: The number of bytes read, or 0 if stream closed.
- */
 
+
+/**
+ * Writes the specified log message to the specified file descriptor, adding
+ * first the relevant selection header.
+ *
+ */
+void write_message(int outputfd, const char * message, unsigned char buf[]) {
+
+  unsigned int msg_len = strlen(message);
+
+  if (msg_len > MAXLENGTH) {
+	perror("serial: write_message: too long.");
+	exit(7);
+  }
+
+  buf[0] = (unsigned char) MESSAGE_SELECTION_HEADER;
+  strcpy((char *) buf+1, message);
+
+  tbh_write(outputfd, buf, msg_len+1);
+
+  return;
+
+}
+
+
+/**
+ * Reads at least nr bytes from the specified file descriptor, and stores them
+ * in buf.
+ *
+ * Returns the number of bytes read, or 0 if stream closed.
+ */
 int read_at_least(int fd, unsigned char buf[], int nr) {
 	int remaining = nr;
 	int nr_read = 0;
@@ -276,11 +310,12 @@ int read_at_least(int fd, unsigned char buf[], int nr) {
 	return nr_read;
 }
 
-/**********************************************************************
- * Name: tbh_read
- * Desc: Reads one message with two-byte-header, filling buffer.
- *       Returns the number of elements used in the buffer, or 0
- *       if the input file has been closed.
+
+/**
+ * Reads one message with two-byte-header (hence from Erlang), filling buffer.
+ *
+ * Returns the number of elements used in the buffer, or 0 if the input file has
+ * been closed.
  *
  */
 int tbh_read(int fd, unsigned char buf[], int buffsize) {
@@ -291,7 +326,7 @@ int tbh_read(int fd, unsigned char buf[], int buffsize) {
 
 	remaining = get_tbh_size(buf);
 
-	Debug1("tbh_read: got message of size %d\r\n", remaining);
+	Debug1("tbh_read: got message of size %d.\r\n", remaining);
 
 	msgsize =
 		read_at_least(fd, &buf[TBHSIZE], Min(remaining, (buffsize - TBHSIZE)));
@@ -302,8 +337,10 @@ int tbh_read(int fd, unsigned char buf[], int buffsize) {
 		return msgsize + TBHSIZE;
 }
 
-/* @doc Writes a number of bytes found in the buffer to the tty, filling the
- * buffer from the given fillfd if neccessary.
+
+/**
+ * Writes a number of bytes found in the buffer to the tty (the serial port),
+ * filling the buffer from the given fillfd if necessary.
  *
  */
 void write_to_tty(int ttyfd, int fillfd, int totalsize, int buffsize,
@@ -323,23 +360,32 @@ void write_to_tty(int ttyfd, int fillfd, int totalsize, int buffsize,
 	return;
 }
 
+
 /**********************************************************************/
 
-int Debug_Enabled = FALSE;
+//int debug_enabled = FALSE;
+int debug_enabled = TRUE;
+
 
 int main(int argc, char *argv[]) {
+
 	int ttyfd = -1;            /* terminal file descriptor */
+
 	int stdinfd;               /* user file descriptor     */
 	int stdoutfd;              /* user out file descriptor */
+
 	boolean cbreak = FALSE;    /* cbreak flag              */
 	boolean erlang = FALSE;    /* talking to erlang flag   */
 	speed_t in_speed = B9600;  /* default in speed         */
 	speed_t out_speed = B9600; /* default out speed        */
 	char ttyname[MAXPATHLEN];  /* terminal name            */
 
+	// Debug messages are shown on the console, but are not visible from Erlang:
+	//Debug("Testing Serial Debug\n");
+
 	strcpy(ttyname, "/dev/ttyS0");
 
-	// Process command-line arguments:
+	// Processes the command-line arguments:
 
 	{
 		int i;
@@ -350,7 +396,7 @@ int main(int argc, char *argv[]) {
 				cbreak = TRUE;
 			} else if (strcmp(argv[i], "-debug") == 0) /* -debug */
 			{
-				Debug_Enabled = TRUE;
+				debug_enabled = TRUE;
 			} else if (strcmp(argv[i], "-speed") == 0) /* -speed  */
 			{
 				i += 1;
@@ -377,18 +423,23 @@ int main(int argc, char *argv[]) {
 
 	// Configure serial port (tty):
 
-	if (!erlang) {
+	Debug1("TTY (serial port) name is %s.\r\n", ttyname);
+
+	if (erlang) {
+		Debug("In Erlang mode.\r\n");
+	} else {
+		Debug("In non-Erlang mode.\r\n");
 		ttyfd = open(ttyname, O_RDWR);
 		if (!TtyOpen(ttyfd)) {
-			fprintf(stderr, "Cannot open terminal %s for read and write\n", ttyname);
-			exit(1);
+			fprintf(stderr, "Serial: cannot open terminal %s for reading and writing.\n", ttyname);
+			exit(8);
 		}
 
 		set_raw_tty_mode(ttyfd);
 		set_tty_speed(ttyfd, in_speed, out_speed);
 	}
 
-	// Configure user port:
+	// Configure user (Erlang) port:
 
 	stdinfd = fileno(stdin);
 	stdoutfd = fileno(stdout);
@@ -396,16 +447,19 @@ int main(int argc, char *argv[]) {
 	if (cbreak) {
 		/* Use non-canonical mode for input */
 		set_raw_tty_mode(stdinfd);
-		fprintf(stderr, "Entering non-canonical mode, exit with ---\n");
+		fprintf(stderr, "Serial: entering non-canonical mode, exit with ---.\n");
 	}
 
-	// Start processing loop:
+	// Start the serial processing loop:
 
 	{
-		fd_set readfds;               /* file descriptor bit field for select */
-		int maxfd;                    /* max file descriptor for select */
-		unsigned char buf[MAXLENGTH]; /* buffer for transfer between serial-user */
-		int escapes;                  /* number of consecutive escapes in cbreak */
+		fd_set readfds;   /* file descriptor bit field for select */
+		int maxfd;        /* max file descriptor for select */
+
+		// Incremented for the added one-byte selection header:
+		unsigned char buf[MAXLENGTH+1]; /* buffer for transfer between serial-user */
+
+		int escapes; /* number of consecutive escapes in cbreak */
 
 		/* Set up initial bit field for select */
 		maxfd = Max(stdinfd, ttyfd);
@@ -415,47 +469,62 @@ int main(int argc, char *argv[]) {
 		escapes = 0;
 
 		while (TRUE) {
+
 			int i;
 
 			if (TtyOpen(stdinfd))
 				FD_SET(stdinfd, &readfds);
+
 			if (TtyOpen(ttyfd))
 				FD_SET(ttyfd, &readfds);
 
 			i = select(maxfd + 1, &readfds, NULLFDS, NULLFDS, NULLTV);
 
 			if (i <= 0) {
-				perror("select");
-				exit(1);
+				perror("serial: select failed.");
+				exit(9);
 			}
 
-			/******************************
-			 * Data from TTY
-			 */
+			// Data read from TTY (serial port):
 			if (TtyOpen(ttyfd) && FD_ISSET(ttyfd, &readfds)) /* from serial port */
 			{
 				int nr_read;
 
-				Debug("receiving from TTY\r\n");
+				Debug("Receiving from TTY\r\n");
 
 				FD_CLR(ttyfd, &readfds);
 
-				nr_read = read(ttyfd, buf, MAXLENGTH);
+				// Data message:
 
-				if (nr_read <= 0) {
-					fprintf(stderr, "problem reading from tty\n");
-					exit(1);
+				unsigned char * payload_buffer ;
+
+				if (erlang) {
+					buf[0] = (unsigned char) DATA_SELECTION_HEADER;
+					payload_buffer = buf+1;
+				}
+				else {
+					payload_buffer = buf;
 				}
 
-				if (erlang)
-					tbh_write(stdoutfd, buf, nr_read);
-				else
+				nr_read = read(ttyfd, payload_buffer, MAXLENGTH);
+
+				if (nr_read <= 0) {
+					fprintf(stderr, "serial: problem reading from tty.\n");
+					exit(10);
+				}
+
+				Debug1("Received from TTY %d bytes.\r\n", nr_read);
+
+				if (erlang) {
+					// Not payload_buffer; one more (header) to write:
+					tbh_write(stdoutfd, buf, nr_read+1);
+				}
+				else {
 					write(stdoutfd, buf, nr_read);
+				}
 			}
 
-			/******************************
-			 * Data from controlling process
-			 */
+			// Data read from the controlling Erlang process:
 			if (TtyOpen(stdinfd) && FD_ISSET(stdinfd, &readfds)) /* from user */
 			{
 				int nr_read;
@@ -463,9 +532,8 @@ int main(int argc, char *argv[]) {
 
 				FD_CLR(stdinfd, &readfds);
 
-				/********************
-				 * check for escape in cbreak mode
-				 */
+				// Check for escape in cbreak mode:
+
 				if (cbreak) {
 					nr_read = read(stdinfd, buf, MAXLENGTH);
 
@@ -474,7 +542,7 @@ int main(int argc, char *argv[]) {
 							escapes++;
 							if (escapes == 3) {
 								close(ttyfd);
-								exit(1);
+								exit(11);
 							}
 						} else {
 							escapes = 0;
@@ -483,29 +551,32 @@ int main(int argc, char *argv[]) {
 					if (TtyOpen(ttyfd))
 						write(ttyfd, buf, nr_read);
 				}
-				/********************
-				 * Erlang mode
-				 */
+
+				// Erlang mode:
 				else if (erlang) {
+
 					/* Messages from Erlang are structured as:
-					 *   Length:16
-					 *   PacketType:8
+					 *   Length: 16
+					 *   PacketType: 8
 					 *   DATA
 					 */
 
 					nr_read = tbh_read(stdinfd, buf, MAXLENGTH);
 
-					/* Check if stdin closed, i.e. controlling
-					 * process terminated.
+					/* Check if stdin closed, i.e. controlling process
+					 * terminated:
 					 */
 					if (nr_read == 0)
-						exit(1);
+					{
+						perror("serial: empty read.");
+						exit(12);
+					}
 
-					/* Interpret packets from Erlang
-					 */
+					// Interpret packets from Erlang:
 					switch (PacketType(buf)) {
-					case SEND: /******************************/
-						Debug("received SEND\r\n");
+
+					case SEND:
+						Debug("Received SEND.\r\n");
 						if (TtyOpen(ttyfd)) {
 							write_to_tty(ttyfd, stdinfd, get_tbh_size(buf) - COMMANDSIZE,
 										 nr_read - HEADERSIZE, &(buf[HEADERSIZE]),
@@ -513,27 +584,27 @@ int main(int argc, char *argv[]) {
 						}
 						break;
 
-					case CONNECT: /******************************/
-						Debug("received CONNECT\r\n");
+					case CONNECT:
+						Debug("Received CONNECT.\r\n");
 						/* Reopen the current terminal */
 						goto open;
 						break;
 
-					case DISCONNECT: /******************************/
-						Debug("received DISCONNECT\r\n");
+					case DISCONNECT:
+						Debug("Received DISCONNECT.\r\n");
 						if (TtyOpen(ttyfd))
 							set_tty_speed(ttyfd, B0, B0);
 						goto close;
 						break;
 
-					case OPEN: /******************************/
-						Debug("received OPEN ");
+					case OPEN:
+						Debug("Received OPEN.\r\n");
 						/* Terminate string */
 						buf[nr_read] = '\0';
-						strcpy(ttyname, &buf[HEADERSIZE]);
+						strcpy(ttyname, (char *) &buf[HEADERSIZE]);
 
 open:
-						Debug1("opening %s \r\n", ttyname);
+						Debug1("Opening %s.\r\n", ttyname);
 
 						if (TtyOpen(ttyfd))
 							close(ttyfd);
@@ -542,25 +613,26 @@ open:
 						maxfd = Max(stdinfd, ttyfd);
 
 						if (!TtyOpen(ttyfd)) {
-							fprintf(stderr, "Cannot open terminal %s for read ",
-									&buf[HEADERSIZE]);
-							fprintf(stderr, "and write\n");
-							exit(1);
+							fprintf(stderr,
+								"Serial: cannot open terminal %s for reading ",
+								&buf[HEADERSIZE]);
+							fprintf(stderr, "and writing.\n");
+							exit(13);
 						}
 
 						set_raw_tty_mode(ttyfd);
 						set_tty_speed(ttyfd, in_speed, out_speed);
 						break;
 
-					case CLOSE: /******************************/
-						Debug("received CLOSE\r\n");
+					case CLOSE:
+						Debug("Received CLOSE.\r\n");
 close:
 						if (TtyOpen(ttyfd))
 							close(ttyfd);
 						ttyfd = -1;
 						break;
 
-					case SPEED: /******************************/
+					case SPEED:
 					{
 						int off;
 
@@ -577,37 +649,44 @@ close:
 						out_speed = get_speed(atoi(&buf[off]));
 
 						Debug1("     raw SPEED %s\r\n", &buf[HEADERSIZE]);
-						Debug2("received SPEED %ud %ud\r\n", (unsigned int)in_speed,
-							   (unsigned int)out_speed);
+						Debug2("Received SPEED %ud %ud.\r\n", (unsigned int) in_speed,
+							   (unsigned int) out_speed);
 
 						if (TtyOpen(ttyfd))
 							set_tty_speed(ttyfd, in_speed, out_speed);
 						break;
 					}
 
-					case PARITY_ODD: /******************************/
+					case PARITY_ODD:
 						break;
 
-					case PARITY_EVEN: /******************************/
+					case PARITY_EVEN:
 						break;
 
-					case BREAK: /******************************/
+					case BREAK:
 						if (TtyOpen(ttyfd))
 							(void)tcsendbreak(ttyfd, BREAKPERIOD);
+						break;
+
+					case REPORT:
+						Debug("Received REPORT\r\n");
+						const char * report = "Serial is functional.";
+						write_message(stdoutfd, report, buf);
 						break;
 
 					default:
 						fprintf(stderr, "%s: unknown command from Erlang\n", argv[0]);
 						break;
 					}
+
 				} else {
 					nr_read = read(stdinfd, buf, MAXLENGTH);
 					write(ttyfd, buf, nr_read);
 				}
 
 				if (nr_read <= 0) {
-					fprintf(stderr, "problem reading from stdin\n");
-					exit(0);
+					fprintf(stderr, "Serial: problem reading from stdin.\n");
+					exit(14);
 				}
 			}
 		}
