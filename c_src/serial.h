@@ -1,6 +1,8 @@
 /*
 Copyright (c) 1996, 1999 Johan Bevemyr
 Copyright (c) 2007, 2009 Tony Garnock-Jones
+Copyright (c) 2022, 2025 Olivier Boudeville
+				   [olivier (dot) boudeville (at) esperide (dot) com]
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -57,36 +59,44 @@ typedef struct {
 
 /* roland */
 typedef enum {
-  SEND = 0,
-  CONNECT = 1,
-  DISCONNECT = 2,
-  OPEN = 3,
-  CLOSE = 4,
-  SPEED = 5,
-  PARITY_ODD = 6,
+  SEND        = 0,
+  CONNECT     = 1,
+  DISCONNECT  = 2,
+  OPEN        = 3,
+  CLOSE       = 4,
+  SPEED       = 5,
+  PARITY_ODD  = 6,
   PARITY_EVEN = 7,
-  BREAK = 8
+  BREAK       = 8,
+  REPORT      = 9
 } command;
 
-extern int Debug_Enabled;
+
+extern int debug_enabled;
+
 
 #define Debug(STRING)                                                          \
   do {                                                                         \
-    if (Debug_Enabled) {                                                       \
-      fprintf(stderr, STRING);                                                 \
-    }                                                                          \
+	if (debug_enabled) {                                                       \
+	  fprintf(stderr, STRING);                                                 \
+	}                                                                          \
   } while (0)
+
+
 #define Debug1(STRING, Arg)                                                    \
   do {                                                                         \
-    if (Debug_Enabled) {                                                       \
-      fprintf(stderr, STRING, Arg);                                            \
-    }                                                                          \
+	if (debug_enabled) {                                                       \
+	  fprintf(stderr, STRING, Arg);                                            \
+	}                                                                          \
   } while (0)
+
+
 #define Debug2(STRING, Arg1, Arg2)                                             \
   do {                                                                         \
-    if (Debug_Enabled) {                                                       \
-      fprintf(stderr, STRING, Arg1, Arg2);                                     \
-    }                                                                          \
+	if (debug_enabled) {                                                       \
+	  fprintf(stderr, STRING, Arg1, Arg2);                                     \
+	}                                                                          \
   } while (0)
+
 
 #endif /* SERIAL_H */
