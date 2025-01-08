@@ -119,33 +119,8 @@ One may rely on the free software ``cutecom`` in order to compare input/output a
 Note that, if modifying erlang-serial's source code, recompiling it is not enough, as it should be reinstalled as well. Run for example from its root: ``make && DESTDIR=. make install``.
 
 
-## Additional Information
 
-
-### USB Interface Freeze
-
-In some cases, generally after a long time (e.g. 16 days), the serial interface does not seem to be functional anymore - at least the USB device that was plugged there stopped receiving and emitting data. The origin of this problem is unknown; possibly the USB device is faulty and serial not guilty.
-
-After this problem happened, we had:
-
- $ ls -l /dev/ttyUSB2
- crw-rw---- 1 root uucp 188, 2 Mar 24 18:45 /dev/ttyUSB2
-
- $ fuser /dev/ttyUSB2
- /dev/ttyUSB2:        2703563
-
- $ ps -edf | grep 2703563
- srvusr 2703563 2703520  0 Mar08 ttyUSB2  00:00:00 xxx/erlang-serial/priv/bin/serial -erlang
-
- $ lsof /dev/ttyUSB2
- COMMAND     PID     USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
- serial  2703563     srvusr 3u   CHR  188,2      0t0 1249 /dev/ttyUSB2
-
-To circumvent it and avoid any unfortunate freezing (which in our case happened more than once), one might stop/start serial regularly, for instance once a day.
-
-
-
-### Code Formatting
+## Code Formatting
 
 The C "legacy" code has been formatted as discussed in [this section](https://seaplus.esperide.org/#c-c-code-formatting) of Ceylan-Seaplus.
 
