@@ -113,6 +113,24 @@ bit_rate bitrate_table[MAXSPEED] = {
 
 
 /**
+ * Reports the specified error, with its code and message.
+ *
+ */
+void report_error(unsigned int code, const char * message) {
+
+	char full_msg[1024];
+
+	snprintf(full_msg, sizeof(full_msg),
+			 DEBUG_PREFIX "Error reported (%d): %s.", code, message);
+
+	perror(full_msg);
+
+	exit(code);
+
+}
+
+
+/**
  * Returns the speed_t value associated with a given bit_rate according to the
  * bitrate_table. B0 is returned if no matching entry is found.
  *
@@ -141,10 +159,9 @@ void set_raw_tty_mode(int fd) {
 
 	/* Get ttymodes */
 
-	if (tcgetattr(fd, &ttymodes) < 0) {
-		perror("serial: tcgetattr failed.");
-		exit(1);
-	}
+	if (tcgetattr(fd, &ttymodes) < 0)
+		report_error(1, "tcgetattr failed");
+
 
 	/* Configure for raw mode (see man termios) */
 	ttymodes.c_cc[VMIN] = 1;  /* at least one character */
@@ -179,10 +196,9 @@ void set_raw_tty_mode(int fd) {
 
 	/* Apply changes */
 
-	if (tcsetattr(fd, TCSAFLUSH, &ttymodes) < 0) {
-		perror("serial: tcsetattr failed.");
-		exit(2);
-	}
+	if (tcsetattr(fd, TCSAFLUSH, &ttymodes) < 0)
+		report_error(2, "tcsetattr failed");
+
 }
 
 
@@ -194,29 +210,22 @@ void set_tty_speed(int fd, speed_t new_ispeed, speed_t new_ospeed) {
 
 	/* Get ttymodes */
 
-	if (tcgetattr(fd, &ttymodes) < 0) {
-		perror("serial: tcgetattr failed.");
-		exit(3);
-	}
+	if (tcgetattr(fd, &ttymodes) < 0)
+		report_error(3, "tcgetattr failed");
 
-	if (cfsetispeed(&ttymodes, new_ispeed) < 0) {
-		perror("serial: cfsetispeed failed.");
-		exit(4);
-	}
+	if (cfsetispeed(&ttymodes, new_ispeed) < 0)
+		report_error(4, "cfsetispeed failed");
 
-	if (cfsetospeed(&ttymodes, new_ospeed) < 0) {
-		perror("serial: cfsetospeed failed.");
-		exit(5);
-	}
+	if (cfsetospeed(&ttymodes, new_ospeed) < 0)
+		report_error(5, "cfsetospeed failed");
 
 	// ttymodes.c_cflag |= CRTSCTS;     /* enable RTS/CTS flow control */
 	ttymodes.c_cflag &= ~CRTSCTS; /* disable RTS/CTS flow control */
 
 	// Apply changes:
-	if (tcsetattr(fd, TCSAFLUSH, &ttymodes) < 0) {
-		perror("serial: tcsetattr failed.");
-		exit(6);
-	}
+	if (tcsetattr(fd, TCSAFLUSH, &ttymodes) < 0)
+		report_error(6, "tcsetattr failed");
+
 }
 
 
@@ -268,19 +277,15 @@ void tbh_write(int fd, const unsigned char buf[], int buffsize) {
  */
 void write_message(int outputfd, const char * message, unsigned char buf[]) {
 
-  unsigned int msg_len = strlen(message);
+	unsigned int msg_len = strlen(message);
 
-  if (msg_len > MAXLENGTH) {
-	perror("serial: write_message: too long.");
-	exit(7);
-  }
+	if (msg_len > MAXLENGTH)
+		report_error(7, " write_message: too long");
 
-  buf[0] = (unsigned char) MESSAGE_SELECTION_HEADER;
-  strcpy((char *) buf+1, message);
+	buf[0] = (unsigned char) MESSAGE_SELECTION_HEADER;
+	strcpy((char *) buf+1, message);
 
-  tbh_write(outputfd, buf, msg_len+1);
-
-  return;
+	tbh_write(outputfd, buf, msg_len+1);
 
 }
 
@@ -363,8 +368,8 @@ void write_to_tty(int ttyfd, int fillfd, int totalsize, int buffsize,
 
 /**********************************************************************/
 
-//int debug_enabled = FALSE;
-int debug_enabled = TRUE;
+int debug_enabled = FALSE;
+//int debug_enabled = TRUE;
 
 
 int main(int argc, char *argv[]) {
@@ -480,10 +485,8 @@ int main(int argc, char *argv[]) {
 
 			i = select(maxfd + 1, &readfds, NULLFDS, NULLFDS, NULLTV);
 
-			if (i <= 0) {
-				perror("serial: select failed.");
-				exit(9);
-			}
+			if (i <= 0)
+				report_error(9, "select failed");
 
 			// Data read from TTY (serial port):
 			if (TtyOpen(ttyfd) && FD_ISSET(ttyfd, &readfds)) /* from serial port */
@@ -567,10 +570,8 @@ int main(int argc, char *argv[]) {
 					 * terminated:
 					 */
 					if (nr_read == 0)
-					{
-						perror("serial: empty read.");
-						exit(12);
-					}
+						report_error(12, "empty read");
+
 
 					// Interpret packets from Erlang:
 					switch (PacketType(buf)) {

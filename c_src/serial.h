@@ -59,25 +59,27 @@ typedef struct {
 
 /* roland */
 typedef enum {
-  SEND        = 0,
-  CONNECT     = 1,
-  DISCONNECT  = 2,
-  OPEN        = 3,
-  CLOSE       = 4,
-  SPEED       = 5,
-  PARITY_ODD  = 6,
-  PARITY_EVEN = 7,
-  BREAK       = 8,
-  REPORT      = 9
+	SEND        = 0,
+	CONNECT     = 1,
+	DISCONNECT  = 2,
+	OPEN        = 3,
+	CLOSE       = 4,
+	SPEED       = 5,
+	PARITY_ODD  = 6,
+	PARITY_EVEN = 7,
+	BREAK       = 8,
+	REPORT      = 9
 } command;
 
 
 extern int debug_enabled;
 
+#define DEBUG_PREFIX "[serial] "
 
 #define Debug(STRING)                                                          \
   do {                                                                         \
 	if (debug_enabled) {                                                       \
+	  fprintf(stderr, DEBUG_PREFIX);                                           \
 	  fprintf(stderr, STRING);                                                 \
 	}                                                                          \
   } while (0)
@@ -86,6 +88,7 @@ extern int debug_enabled;
 #define Debug1(STRING, Arg)                                                    \
   do {                                                                         \
 	if (debug_enabled) {                                                       \
+	  fprintf(stderr, DEBUG_PREFIX);                                           \
 	  fprintf(stderr, STRING, Arg);                                            \
 	}                                                                          \
   } while (0)
@@ -94,6 +97,7 @@ extern int debug_enabled;
 #define Debug2(STRING, Arg1, Arg2)                                             \
   do {                                                                         \
 	if (debug_enabled) {                                                       \
+	  fprintf(stderr, DEBUG_PREFIX);                                           \
 	  fprintf(stderr, STRING, Arg1, Arg2);                                     \
 	}                                                                          \
   } while (0)
