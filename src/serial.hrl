@@ -1,5 +1,7 @@
 %% Copyright (c) 1996, 1999 Johan Bevemyr
 %% Copyright (c) 2007, 2009 Tony Garnock-Jones
+%% Copyright (c) 2022, 2025 Olivier Boudeville
+%%						 [olivier (dot) boudeville (at) esperide (dot) com]
 %%
 %% Permission is hereby granted, free of charge, to any person obtaining a copy
 %% of this software and associated documentation files (the "Software"), to deal
@@ -28,14 +30,15 @@
 -ifndef(SERIAL_HRL).
 -define(SERIAL_HRL, true).
 
--define(SEND, 0).
--define(CONNECT, 1).
--define(DISCONNECT, 2).
--define(OPEN, 3).
--define(CLOSE, 4).
--define(SPEED, 5).
--define(PARITY_ODD, 6).
+-define(SEND,        0).
+-define(CONNECT,     1).
+-define(DISCONNECT,  2).
+-define(OPEN,        3).
+-define(CLOSE,       4).
+-define(SPEED,       5).
+-define(PARITY_ODD,  6).
 -define(PARITY_EVEN, 7).
--define(BREAK, 8).
+-define(BREAK,       8).
+-define(REPORT,      9).
 
 -endif.
