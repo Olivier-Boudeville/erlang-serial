@@ -35,6 +35,31 @@ Eshell V6.4.1  (abort with ^G)
 <0.35.0>
 ```
 
+More detailed example, with debug logs enabled (see the debug_enabled in serial.c):
+```text
+# From the root of the clone:
+$ make clean all
+$ erl -pa ebin/
+1> P = serial:start().
+<0.86.0>
+ TTY (serial port) name is /dev/ttyS0.
+In Erlang mode.
+
+2> P ! report.
+Serial report requested.
+report
+tbh_read: got message of size 1.
+Received REPORT
+tbh_write: send message of size 22.
+(log message of 21 bytes received from port #Port<0.3>)
+
+3> receive M -> io:format("Got: ~p~n", [M]) end.
+Got: {receiveReport,[<<"Serial is functional.">>]}
+ok
+
+4>
+```
+
 Our very specific way of installing erlang-serial, typically for [Ceylan-Oceanic](https://oceanic.esperide.org), is:
 
 ```text
@@ -136,7 +161,7 @@ Copyright (c) 1996, 1999 Johan Bevemyr
 
 Copyright (c) 2007, 2009 Tony Garnock-Jones
 
-Copyright (c) 2022-2023 Olivier Boudeville
+Copyright (c) 2022-2025 Olivier Boudeville
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
