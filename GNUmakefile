@@ -24,7 +24,7 @@
 #  Created:	 Fri Oct 18 09:59:34 1996
 
 
-.PHONY: all install rebuild test clean echo-version
+.PHONY: all install rebuild test clean echo-version sync-all-to-server
 
 VSN = 1.1
 INSTALL_DIR=serial-$(VSN)
@@ -49,6 +49,20 @@ ERL_FILES = $(wildcard src/*.erl)
 BEAM_FILES = $(patsubst src/%.erl, ebin/%.beam, $(ERL_FILES))
 
 ######################################################################
+
+
+SYNC_TOOL := $$(which rsync 2>/dev/null)
+
+ifdef SSH_PORT
+	SSH_OPT := -e "ssh -p $(SSH_PORT)"
+
+endif
+
+SYNC_OPT := -rlpD -vz $(SSH_OPT) --exclude '.git'
+
+#BASE_NAME := $$(basename $$(pwd))
+BASE_NAME := erlang-serial
+
 
 all: priv/bin/serial $(BEAM_FILES)
 
@@ -82,8 +96,15 @@ rebuild: clean all
 test:
 
 
+# CEYLAN_SYNC_TARGET_ROOT to be set in the environment, typically based on the
+# sync-to-us-main-server alias:
+#
+sync-all-to-server: all
+	@$(SYNC_TOOL) $(SYNC_OPT) ebin erlang priv $(SERIAL_SRV):$(CEYLAN_SYNC_TARGET_ROOT)/$(BASE_NAME)
+
+
 clean:
-	rm -f priv/bin/serial $(OBJECT_FILES) $(BEAM_FILES)
+	/bin/rm -f priv/bin/serial $(OBJECT_FILES) $(BEAM_FILES)
 
 serial.o: serial.c serial.h
 
