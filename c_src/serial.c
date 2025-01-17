@@ -121,7 +121,7 @@ void report_error(unsigned int code, const char * message) {
 	char full_msg[1024];
 
 	snprintf(full_msg, sizeof(full_msg),
-			 DEBUG_PREFIX "Error reported (%d): %s.", code, message);
+			 DEBUG_PREFIX "Error reported (%d): %s", code, message);
 
 	perror(full_msg);
 
