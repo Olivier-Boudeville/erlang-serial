@@ -97,15 +97,15 @@ Data is received as a message to the process that called `serial:start()`. That 
 ```erlang
 listen() ->
   receive
-	% Receive data from the serial port on the caller's PID:
-	{data, Bytes} ->
-	  io:format("~s", [Bytes]),
-	  listen()
+    % Receive data from the serial port on the caller's PID:
+    {data, Bytes} ->
+      io:format("~s", [Bytes]),
+      listen()
   after
-	% Stop listening after 5 seconds of inactivity:
-	5000 ->
-	  io:format("~n"),
-	  ok
+    % Stop listening after 5 seconds of inactivity:
+    5000 ->
+      io:format("~n"),
+      ok
   end.
 ```
 

@@ -22,9 +22,9 @@
 %% THE SOFTWARE.
 %%
 %    -*- Erlang -*-
-%    File:	serial.erl  (~jb/serialport/serial.erl)
-%    Author:	Johan Bevemyr
-%    Created:	Tue Oct 22 14:07:24 1996
+%    File:  serial.erl  (~jb/serialport/serial.erl)
+%    Author:    Johan Bevemyr
+%    Created:   Tue Oct 22 14:07:24 1996
 %    Purpose:
 
 -module(serial).
@@ -51,20 +51,20 @@
 
 
 priv_dir() ->
-	case code:priv_dir(serial) of
+    case code:priv_dir(serial) of
 
-		{error, bad_name} ->
-			"./priv";
+        {error, bad_name} ->
+            "./priv";
 
-		D ->
-			D
+        D ->
+            D
 
-	end.
+    end.
 
 
 
 start() ->
-	start([]).
+    start([]).
 
 
 
@@ -72,165 +72,165 @@ start() ->
 % one of Oceanic), so we provide a way of setting it explicitly.
 %
 start(Options, SerialPrivDir) ->
-	SerialPid = spawn_link(serial, init, [SerialPrivDir, self()]),
-	[ SerialPid ! Opt || Opt <- Options ],
-	SerialPid.
+    SerialPid = spawn_link(serial, init, [SerialPrivDir, self()]),
+    [ SerialPid ! Opt || Opt <- Options ],
+    SerialPid.
 
 start(Options) ->
-	start(Options, _SerialPrivDir=priv_dir()).
+    start(Options, _SerialPrivDir=priv_dir()).
 
 
 
 init(SerialPrivDir, ClientPid) ->
-	process_flag(trap_exit, true),
-	SerialPort = open_port(
-		{spawn, SerialPrivDir ++ "/bin/serial -erlang"},
-		_SpawnOpts=[binary, {packet, 2}, exit_status]
-	),
-	serial_loop(ClientPid, SerialPort).
+    process_flag(trap_exit, true),
+    SerialPort = open_port(
+        {spawn, SerialPrivDir ++ "/bin/serial -erlang"},
+        _SpawnOpts=[binary, {packet, 2}, exit_status]
+    ),
+    serial_loop(ClientPid, SerialPort).
 
 
 init(Pid) ->
-	init(_SerialPrivDir = priv_dir(), Pid).
+    init(_SerialPrivDir = priv_dir(), Pid).
 
 
 
 
 serial_loop(ClientPid, SerialPort) ->
 
-	receive
+    receive
 
-		% See implementation notes:
-		{SerialPort, {data, <<?data_selection_header, Data/binary>>}} ->
-			io:format("(data message of ~B bytes received from port ~w)~n",
-					  [size(Data), SerialPort]),
-			ClientPid ! {data, Data},
-			serial_loop(ClientPid, SerialPort);
+        % See implementation notes:
+        {SerialPort, {data, <<?data_selection_header, Data/binary>>}} ->
+            io:format("(data message of ~B bytes received from port ~w)~n",
+                      [size(Data), SerialPort]),
+            ClientPid ! {data, Data},
+            serial_loop(ClientPid, SerialPort);
 
-		{SerialPort, {data, <<?message_selection_header, Msg/binary>>}} ->
-			io:format("(log message of ~B bytes received from port ~w)~n",
-					  [size(Msg), SerialPort]),
-			ClientPid ! {onSerialMessage, Msg},
-			serial_loop(ClientPid, SerialPort);
+        {SerialPort, {data, <<?message_selection_header, Msg/binary>>}} ->
+            io:format("(log message of ~B bytes received from port ~w)~n",
+                      [size(Msg), SerialPort]),
+            ClientPid ! {onSerialMessage, Msg},
+            serial_loop(ClientPid, SerialPort);
 
-		{SerialPort, {data, <<OtherSelHeader, Data/binary>>}} ->
-			io:format("Error, the 'serial' port sent a message with "
-				"unsupported selection header ~w (data ~p ignored).",
-				[ OtherSelHeader, Data ] ),
-			serial_loop(ClientPid, SerialPort);
-
-
-		{send, Bytes} ->
-			send_serial(SerialPort, [?SEND, Bytes]),
-			serial_loop(ClientPid, SerialPort);
-
-		connect ->
-			send_serial(SerialPort, [?CONNECT]),
-			serial_loop(ClientPid, SerialPort);
-
-		disconnect ->
-			send_serial(SerialPort, [?DISCONNECT]),
-			serial_loop(ClientPid, SerialPort);
-
-		{open, TTY} ->
-			send_serial(SerialPort, [?OPEN, TTY]),
-			serial_loop(ClientPid, SerialPort);
-
-		close ->
-			send_serial(SerialPort, [?CLOSE]),
-			serial_loop(ClientPid, SerialPort);
-
-		{speed, NewInSpeed, NewOutSpeed} ->
-			send_serial(SerialPort, [
-				?SPEED,
-				integer_to_list(NewInSpeed),
-				" ",
-				integer_to_list(NewOutSpeed),
-				0
-			]),
-			serial_loop(ClientPid, SerialPort);
-
-		{speed, NewSpeed} ->
-			send_serial(SerialPort, [
-				?SPEED,
-				integer_to_list(NewSpeed),
-				" ",
-				integer_to_list(NewSpeed),
-				0
-			]),
-			serial_loop(ClientPid, SerialPort);
-
-		parity_odd ->
-			send_serial(SerialPort, [?PARITY_ODD]),
-			serial_loop(ClientPid, SerialPort);
-
-		parity_even ->
-			send_serial(SerialPort, [?PARITY_EVEN]),
-			serial_loop(ClientPid, SerialPort);
-
-		break ->
-			send_serial(SerialPort, [?BREAK]),
-			serial_loop(ClientPid, SerialPort);
-
-		report ->
-			io:format("Serial report requested.~n", []),
-			send_serial(SerialPort, [?REPORT]),
-
-			% Replaced with a onSerialMessage message being sent back:
-
-			%io:format("Serial report waited.~n", []),
-			% Low probability that we receive an unrelated packet:
-			%% receive
-
-			%%	{SerialPort, {data, ReportBytes}} ->
-			%%		%io:format("Serial report received: ~p.~n", [ReportBytes]),
-			%%		ClientPid ! {receiveReport, [ReportBytes]}
-
-			%% end,
-
-			serial_loop(ClientPid, SerialPort);
+        {SerialPort, {data, <<OtherSelHeader, Data/binary>>}} ->
+            io:format("Error, the 'serial' port sent a message with "
+                "unsupported selection header ~w (data ~p ignored).",
+                [ OtherSelHeader, Data ] ),
+            serial_loop(ClientPid, SerialPort);
 
 
-		stop ->
-			io:format("Stop requested, closing port ~w.~n", [SerialPort]),
-			% Not knowing whether port shall be closed:
-			send_serial(SerialPort, [?CLOSE]),
-			stopped;
+        {send, Bytes} ->
+            send_serial(SerialPort, [?SEND, Bytes]),
+            serial_loop(ClientPid, SerialPort);
 
-		% For a synchronous termination:
-		{stop, RequesterPid} ->
-			io:format(
-				"Stop requested by ~w, closing port ~w.~n",
-				[RequesterPid, SerialPort]
-			),
-			% Not knowing whether port shall be closed:
-			send_serial(SerialPort, [?CLOSE]),
-			RequesterPid ! serial_stopped,
-			stopped;
+        connect ->
+            send_serial(SerialPort, [?CONNECT]),
+            serial_loop(ClientPid, SerialPort);
 
-		{'EXIT', SerialPort, Why} ->
-			ClientPid ! {onSerialExitWithReason, [SerialPort, Why]},
-			io:format("Serial port ~w exited with reason ~w.~n",
-					  [SerialPort, Why]),
-			exit(Why);
+        disconnect ->
+            send_serial(SerialPort, [?DISCONNECT]),
+            serial_loop(ClientPid, SerialPort);
 
-		{'EXIT', Linked, Why} ->
-			ClientPid ! {onSerialExitLinked, [Linked, Why]},
-			io:format("Linked ~w exited with reason ~w.~n", [Linked, Why]),
-			exit(Why);
+        {open, TTY} ->
+            send_serial(SerialPort, [?OPEN, TTY]),
+            serial_loop(ClientPid, SerialPort);
 
-		{Port, {exit_status, Status} } ->
-			ClientPid ! {onSerialExit, [Port, Status]},
-			io:format("Port ~w exited, with status ~B.~n", [ Port, Status ] ),
-			exit(Status);
+        close ->
+            send_serial(SerialPort, [?CLOSE]),
+            serial_loop(ClientPid, SerialPort);
 
-		OtherError ->
-			io:format("Received unknown message (ignored): '~w'.~n",
-					  [OtherError]),
-			serial_loop(ClientPid, SerialPort)
+        {speed, NewInSpeed, NewOutSpeed} ->
+            send_serial(SerialPort, [
+                ?SPEED,
+                integer_to_list(NewInSpeed),
+                " ",
+                integer_to_list(NewOutSpeed),
+                0
+            ]),
+            serial_loop(ClientPid, SerialPort);
 
-	end.
+        {speed, NewSpeed} ->
+            send_serial(SerialPort, [
+                ?SPEED,
+                integer_to_list(NewSpeed),
+                " ",
+                integer_to_list(NewSpeed),
+                0
+            ]),
+            serial_loop(ClientPid, SerialPort);
+
+        parity_odd ->
+            send_serial(SerialPort, [?PARITY_ODD]),
+            serial_loop(ClientPid, SerialPort);
+
+        parity_even ->
+            send_serial(SerialPort, [?PARITY_EVEN]),
+            serial_loop(ClientPid, SerialPort);
+
+        break ->
+            send_serial(SerialPort, [?BREAK]),
+            serial_loop(ClientPid, SerialPort);
+
+        report ->
+            io:format("Serial report requested.~n", []),
+            send_serial(SerialPort, [?REPORT]),
+
+            % Replaced with a onSerialMessage message being sent back:
+
+            %io:format("Serial report waited.~n", []),
+            % Low probability that we receive an unrelated packet:
+            %% receive
+
+            %%  {SerialPort, {data, ReportBytes}} ->
+            %%      %io:format("Serial report received: ~p.~n", [ReportBytes]),
+            %%      ClientPid ! {receiveReport, [ReportBytes]}
+
+            %% end,
+
+            serial_loop(ClientPid, SerialPort);
+
+
+        stop ->
+            io:format("Stop requested, closing port ~w.~n", [SerialPort]),
+            % Not knowing whether port shall be closed:
+            send_serial(SerialPort, [?CLOSE]),
+            stopped;
+
+        % For a synchronous termination:
+        {stop, RequesterPid} ->
+            io:format(
+                "Stop requested by ~w, closing port ~w.~n",
+                [RequesterPid, SerialPort]
+            ),
+            % Not knowing whether port shall be closed:
+            send_serial(SerialPort, [?CLOSE]),
+            RequesterPid ! serial_stopped,
+            stopped;
+
+        {'EXIT', SerialPort, Why} ->
+            ClientPid ! {onSerialExitWithReason, [SerialPort, Why]},
+            io:format("Serial port ~w exited with reason ~w.~n",
+                      [SerialPort, Why]),
+            exit(Why);
+
+        {'EXIT', Linked, Why} ->
+            ClientPid ! {onSerialExitLinked, [Linked, Why]},
+            io:format("Linked ~w exited with reason ~w.~n", [Linked, Why]),
+            exit(Why);
+
+        {Port, {exit_status, Status} } ->
+            ClientPid ! {onSerialExit, [Port, Status]},
+            io:format("Port ~w exited, with status ~B.~n", [ Port, Status ] ),
+            exit(Status);
+
+        OtherError ->
+            io:format("Received unknown message (ignored): '~w'.~n",
+                      [OtherError]),
+            serial_loop(ClientPid, SerialPort)
+
+    end.
 
 
 send_serial(SerialPort, Message) ->
-	SerialPort ! {self(), {command, Message}}.
+    SerialPort ! {self(), {command, Message}}.

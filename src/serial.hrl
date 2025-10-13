@@ -1,7 +1,7 @@
 %% Copyright (c) 1996, 1999 Johan Bevemyr
 %% Copyright (c) 2007, 2009 Tony Garnock-Jones
 %% Copyright (c) 2022, 2025 Olivier Boudeville
-%%						 [olivier (dot) boudeville (at) esperide (dot) com]
+%%                       [olivier (dot) boudeville (at) esperide (dot) com]
 %%
 %% Permission is hereby granted, free of charge, to any person obtaining a copy
 %% of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,9 @@
 %% THE SOFTWARE.
 %%
 %    -*- Erlang -*-
-%    File:	serial.hrl  (~jb/serialport/serial.hrl)
-%    Author:	Johan Bevemyr
-%    Created:	Tue Oct 22 16:31:42 1996
+%    File:  serial.hrl  (~jb/serialport/serial.hrl)
+%    Author:    Johan Bevemyr
+%    Created:   Tue Oct 22 16:31:42 1996
 %    Purpose:
 
 -ifndef(SERIAL_HRL).
