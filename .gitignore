@@ -1,3 +1,6 @@
+_build
+erlang
 ebin/*.beam
 priv/bin/erlang-serial
+priv
 c_src/*.o
