@@ -102,14 +102,14 @@ serial_loop(ClientPid, SerialPort) ->
 
         % See implementation notes:
         {SerialPort, {data, <<?data_selection_header, Data/binary>>}} ->
-            io:format("(data message of ~B bytes received from port ~w)~n",
-                      [size(Data), SerialPort]),
+            %io:format("(data message of ~B bytes received from port ~w)~n",
+            %          [size(Data), SerialPort]),
             ClientPid ! {data, Data},
             serial_loop(ClientPid, SerialPort);
 
         {SerialPort, {data, <<?message_selection_header, Msg/binary>>}} ->
-            io:format("(log message of ~B bytes received from port ~w)~n",
-                      [size(Msg), SerialPort]),
+            %io:format("(log message of ~B bytes received from port ~w)~n",
+            %          [size(Msg), SerialPort]),
             ClientPid ! {onSerialMessage, Msg},
             serial_loop(ClientPid, SerialPort);
 
